@@ -23,7 +23,9 @@ class SshArguments:
             validators.instance_of(IPv4Address), validators.instance_of(IPv6Address), validators.instance_of(str)
         )
     )
-    destination_port: int = field(validator=validators.and_(validators.instance_of(int), validators.ge(1), validators.le(65535)))
+    destination_port: int = field(
+        validator=validators.and_(validators.instance_of(int), validators.ge(1), validators.le(65535))
+    )
     flags: list[str] = field(
         validator=validators.deep_iterable(
             member_validator=validators.instance_of(str), iterable_validator=validators.instance_of(list)
@@ -46,11 +48,11 @@ class SshArguments:
         flags = []
         value_args = []
 
-        #logger.debug(f"Parsing command list: {cmd_list}")
-        #logger.debug(f'executable_name="{executable_name}"')
+        # logger.debug(f"Parsing command list: {cmd_list}")
+        # logger.debug(f'executable_name="{executable_name}"')
         argument_index = 1
         while argument_index < len(cmd_list):
-            #logger.debug(f"Parsing argument index {argument_index}: {cmd_list[argument_index]}")
+            # logger.debug(f"Parsing argument index {argument_index}: {cmd_list[argument_index]}")
 
             # Search for arguments
             if cmd_list[argument_index].startswith("-"):
@@ -68,12 +70,12 @@ class SshArguments:
 
                         # Normalize arguments so "-D9050" and ["-D", "9050"] both appear as ("D", "9050")
                         if len(arg_value := cmd_list[argument_index][char_index + 1 :]) == 0:
-                            #logger.debug(f"Parsing argument index {argument_index + 1} for argument value: {cmd_list[argument_index + 1]}")
+                            # logger.debug(f"Parsing argument index {argument_index + 1} for argument value: {cmd_list[argument_index + 1]}")
                             arg_value = cmd_list[argument_index + 1]
                             argument_index += 1
 
                         # Add the arg_value and arg_type to the value_args list
-                        #logger.debug(f'Found value_argument: argument="{arg_type}", value="{arg_value}"')
+                        # logger.debug(f'Found value_argument: argument="{arg_type}", value="{arg_value}"')
                         value_args.append((arg_type, arg_value))
                         break
 
@@ -82,7 +84,7 @@ class SshArguments:
                         char_index += 1
                         continue
 
-                    #logger.error(f"Unknown argument {char}, treating as flag")
+                    # logger.error(f"Unknown argument {char}, treating as flag")
                     flags.append(char)
                     char_index += 1
                     continue
@@ -93,7 +95,7 @@ class SshArguments:
                     destination_host = ip_address(cmd_list[argument_index])
                 except ValueError:
                     destination_host = cmd_list[argument_index]
-                #logger.debug(f'Found host="{destination_host}"')
+                # logger.debug(f'Found host="{destination_host}"')
             else:
                 raise ValueError(f"Unexpected argument: {cmd_list[argument_index]}")
 
@@ -105,7 +107,11 @@ class SshArguments:
                 destination_port = int(value)
 
         return cls(
-            executable_name=executable_name, destination_host=destination_host, destination_port=destination_port, flags=flags, value_arguments=value_args
+            executable_name=executable_name,
+            destination_host=destination_host,
+            destination_port=destination_port,
+            flags=flags,
+            value_arguments=value_args,
         )
 
 

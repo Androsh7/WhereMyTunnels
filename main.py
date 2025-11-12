@@ -22,12 +22,14 @@ from src.ssh_types.ssh_process import SshProcess
 
 console = Console()
 
-SSH_NAME_RE = re.compile(r'(?:^|/)(ssh)(?:\.exe)?$', re.IGNORECASE)
+SSH_NAME_RE = re.compile(r"(?:^|/)(ssh)(?:\.exe)?$", re.IGNORECASE)
+
+
 def get_ssh_raw_processes() -> list[psutil.Process]:
     for process in psutil.process_iter(["pid", "username", "name", "cmdline"]):
         try:
             name = (process.info.get("name") or "").strip()
-            cmd  = process.info.get("cmdline") or []
+            cmd = process.info.get("cmdline") or []
 
             # Match "ssh" but not "sshd"
             if SSH_NAME_RE.search(name):
@@ -50,6 +52,7 @@ def get_ssh_processes() -> list[BaseSsh]:
             out_list.append(TraditionalSession.from_process(process))
     return out_list
 
+
 def master_socket_ssh_tree(debug: bool, ssh_process_list: list[BaseSsh]) -> Tree:
     tree = Tree("[bold]Master Sockets[/bold]")
     for ssh_process in ssh_process_list:
@@ -58,7 +61,7 @@ def master_socket_ssh_tree(debug: bool, ssh_process_list: list[BaseSsh]) -> Tree
         # Create a branch for the master socket
         branch = tree.add(str(ssh_process))
         if debug:
-            branch.add(f'[yellow]{ssh_process.ssh_process.raw_arguments}[/yellow]')
+            branch.add(f"[yellow]{ssh_process.ssh_process.raw_arguments}[/yellow]")
 
         # Create sub-branches for forwards
         for forward in ssh_process.forwards:
@@ -72,25 +75,27 @@ def master_socket_ssh_tree(debug: bool, ssh_process_list: list[BaseSsh]) -> Tree
 
             # Print the raw arguments
             if debug:
-                sub_branch.add(f'[yellow]{ssh_sub_process.ssh_process.raw_arguments}[/yellow]')
+                sub_branch.add(f"[yellow]{ssh_sub_process.ssh_process.raw_arguments}[/yellow]")
     return tree
 
+
 def traditional_tunnel_ssh_tree(debug: bool, ssh_process_list: list[BaseSsh]) -> Tree:
-    
+
     tree = Tree("[bold]Traditional Tunnels[/bold]")
     for ssh_process in ssh_process_list:
         if ssh_process.ssh_type != "traditional_tunnel":
             continue
         branch = tree.add(str(ssh_process))
-        
+
         # Print the raw arguments
         if debug:
-            branch.add(f'[yellow]{ssh_process.ssh_process.raw_arguments}[/yellow]')
+            branch.add(f"[yellow]{ssh_process.ssh_process.raw_arguments}[/yellow]")
 
         # Print all forwards
         for forward in ssh_process.forwards:
             branch.add(str(forward))
     return tree
+
 
 def traditional_session_ssh_tree(debug: bool, ssh_process_list: list[BaseSsh]) -> Tree:
     tree = Tree("[bold]Traditional Sessions[/bold]")
@@ -101,8 +106,9 @@ def traditional_session_ssh_tree(debug: bool, ssh_process_list: list[BaseSsh]) -
 
         # Print the raw arguments
         if debug:
-            branch.add(f'[yellow]{ssh_process.ssh_process.raw_arguments}[/yellow]')
+            branch.add(f"[yellow]{ssh_process.ssh_process.raw_arguments}[/yellow]")
     return tree
+
 
 def create_trees(debug: bool) -> Group:
     ssh_process_list = get_ssh_processes()
@@ -112,6 +118,7 @@ def create_trees(debug: bool) -> Group:
         traditional_session_ssh_tree(debug, ssh_process_list),
     )
 
+
 def render_tree(debug: bool = False, interval: float = 2.0):
     """Continuously refresh the tree output every `interval` seconds."""
     with Live(create_trees(debug), refresh_per_second=4, console=console) as live:
@@ -120,9 +127,10 @@ def render_tree(debug: bool = False, interval: float = 2.0):
             live.update(new_group)
             time.sleep(interval)
 
+
 if __name__ == "__main__":
     try:
         console.rule(Text("WhereMyTunnels v1.0.0", style="bold green"), style="bold green", characters="=")
-        render_tree(debug = True)
+        render_tree(debug=True)
     except KeyboardInterrupt:
         pass

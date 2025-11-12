@@ -20,13 +20,18 @@ class Forward:
         validator=validators.and_(validators.instance_of(int), validators.ge(1), validators.le(65535))
     )
     destination_host: Union[IPv4Address, IPv6Address, str] = field(
-        validator=validators.or_(validators.instance_of(IPv4Address), validators.instance_of(IPv6Address), validators.instance_of(str))
+        validator=validators.or_(
+            validators.instance_of(IPv4Address), validators.instance_of(IPv6Address), validators.instance_of(str)
+        )
     )
     remote_port: int = field(
         validator=validators.and_(validators.instance_of(int), validators.ge(1), validators.le(65535))
     )
-    gateway_ip: Optional[Union[IPv4Address, IPv6Address, str]] = field(default=None,
-        validator=validators.or_(validators.optional(IPv4Address), validators.instance_of(IPv6Address), validators.instance_of(str))
+    gateway_ip: Optional[Union[IPv4Address, IPv6Address, str]] = field(
+        default=None,
+        validator=validators.or_(
+            validators.optional(IPv4Address), validators.instance_of(IPv6Address), validators.instance_of(str)
+        ),
     )
 
     def __str__(self):

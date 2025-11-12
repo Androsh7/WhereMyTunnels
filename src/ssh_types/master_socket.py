@@ -8,6 +8,7 @@ from src.ssh_types.base_ssh import BaseSsh
 from src.ssh_types.ssh_process import SshProcess
 from src.ssh_types.base_forward import Forward
 
+
 @define
 class MasterSocket(BaseSsh):
     forwards: list[Forward] = field(validator=validators.instance_of(list))

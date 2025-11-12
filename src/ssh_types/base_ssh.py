@@ -11,6 +11,7 @@ from src.ssh_types.ssh_process import SshProcess
 from src.ssh_types.default import SSH_TYPES
 from src.ssh_types.base_forward import Forward
 
+
 @define
 class BaseSsh:
     ssh_type: Literal[SSH_TYPES] = field(
