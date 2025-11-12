@@ -8,6 +8,7 @@ from typing import Union
 import psutil
 import time
 from rich.console import Console, Group
+from rich.text import Text
 from rich.tree import Tree
 from rich.live import Live
 
@@ -100,11 +101,13 @@ def render_tree(interval: float = 2.0):
     """Continuously refresh the tree output every `interval` seconds."""
     with Live(create_trees(), refresh_per_second=4, console=console) as live:
         while True:
-            # --- Rebuild your data model here ---
             new_group = create_trees()
-            # Update the live display
             live.update(new_group)
             time.sleep(interval)
 
 if __name__ == "__main__":
-    render_tree(interval=2)
+    try:
+        console.rule(Text("WhereMyTunnels v1.0.0", style="bold green"), style="bold green", characters="=")
+        render_tree()
+    except KeyboardInterrupt:
+        pass
