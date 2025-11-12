@@ -7,3 +7,9 @@ __pycache__/
 .pytest_cache/
 build/
 *.egg-info/
+
+# Nuitka
+*.build/
+*.dist/
+*.onefile-build
+*.exe
