@@ -1,0 +1,43 @@
+"""Defines the TraditionalTunnel class"""
+
+# Third-party libraries
+from attrs import define, field, validators
+
+# Project libraries
+from src.ssh_types.base_ssh import BaseSsh
+from src.ssh_types.base_forward import Forward
+from src.ssh_types.ssh_process import SshProcess
+
+
+@define
+class TraditionalTunnel(BaseSsh):
+    forwards: list[Forward] = field(validator=validators.instance_of(list))
+
+    def __str__(self):
+        return f'{self.ssh_process.username.split("\\")[-1]}@{self.ssh_process.arguments.destination_host}:{self.ssh_process.arguments.destination_port} ({self.ssh_process.pid})'
+
+    @staticmethod
+    def is_process_this(process: SshProcess) -> bool:
+        # Check for Master Socket flag
+        if "M" in process.arguments.flags:
+            return False
+
+        # Check for the socket argument and a forward (Local or Reverse)
+        socket_argument = False
+        forward_argument = False
+        for argument, _ in process.arguments.value_arguments:
+            if argument == "S":
+                socket_argument = True
+            elif argument in ("L", "R"):
+                forward_argument = True
+
+        return forward_argument and not socket_argument
+
+    @classmethod
+    def from_process(cls, process: SshProcess):
+        return cls(
+            ssh_process=process,
+            forwards=BaseSsh.get_forward_list(process),
+            ssh_type="traditional_tunnel",
+            socket_file=None,
+        )

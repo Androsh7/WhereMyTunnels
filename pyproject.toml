@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "WhereMyTunnels"
+version = "0.1.0"
+description = "Commandline tool for viewing current ssh connections"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+
+dependencies = [
+    "loguru",
+    "attrs",
+    "psutil",
+    "rich",
+]
+
+[project.urls]
+Homepage = "https://github.com/Androsh7/ssh-arg-parser"
+Repository = "https://github.com/Androsh7/ssh-arg-parser/issues"
+Issues = "https://github.com/Androsh7/ssh-arg-parser/issues"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_configs = true
+
+[tool.black]
+line-length = 120
+target-version = ["py39", "py310", "py311", "py312", "py313"]
+
+[tool.isort]
+profile = "black"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "black",
+  "isort",
+]
