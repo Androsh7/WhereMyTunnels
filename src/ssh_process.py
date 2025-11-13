@@ -2,7 +2,7 @@
 
 # Standard libraries
 import psutil
-from typing import Union
+from typing import Union, Optional
 from ipaddress import IPv4Address, IPv6Address, ip_address
 
 # Third-party libraries
@@ -19,6 +19,7 @@ class SshArguments:
     """Class for organizing the ssh command list"""
 
     executable_name: str = field(validator=validators.instance_of(str))
+    username: Optional[str] = field(validator=validators.optional(validator=validators.instance_of(str)))
     destination_host: Union[IPv4Address, IPv6Address, str] = field(
         validator=validators.or_(
             validators.instance_of(IPv4Address), validators.instance_of(IPv6Address), validators.instance_of(str)
@@ -92,13 +93,18 @@ class SshArguments:
 
             # Grab the destination host
             elif destination_host is None:
+                if "@" in cmd_list[argument_index]:
+                    username = cmd_list[argument_index].split("@")[0]
+                    host_str = cmd_list[argument_index].split("@")[1]
+                else:
+                    host_str = cmd_list[argument_index]
                 try:
-                    destination_host = ip_address(cmd_list[argument_index])
+                    destination_host = ip_address(host_str)
                 except ValueError:
-                    destination_host = cmd_list[argument_index]
+                    destination_host = host_str
                 # logger.debug(f'Found host="{destination_host}"')
             else:
-                raise ValueError(f"Unexpected argument: {cmd_list[argument_index]}")
+                raise ValueError(f"Unexpected argument: {host_str}")
 
             argument_index += 1
 
@@ -108,6 +114,7 @@ class SshArguments:
                 destination_port = int(value)
 
         return cls(
+            username=username,
             executable_name=executable_name,
             destination_host=destination_host,
             destination_port=destination_port,
@@ -133,10 +140,13 @@ class SshProcess:
 
     @classmethod
     def from_process(cls, process: psutil.Process):
-        username = process.info["username"]
         pid = process.info["pid"]
         connections = process.net_connections()
         arguments = SshArguments.from_command_list(process.info["cmdline"])
+        if arguments.username is None:
+            username = process.info["username"]
+        else:
+            username = arguments.username
 
         return cls(
             username=username,

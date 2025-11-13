@@ -1,5 +1,6 @@
 """Defines default values and constants"""
 
+VERSION = "1.0.0"
 FORWARD_TYPES = ("local", "reverse")
 SSH_TYPES = ("master_socket", "socket_forward", "traditional_tunnel", "traditional_session")
 SSH_FLAGS = ("n", "N", "f", "4", "6", "v", "vv", "vvv", "A", "a", "C", "q", "X", "x", "y", "g", "k", "M")

@@ -14,10 +14,13 @@ class TraditionalTunnel(BaseSsh):
 
     def __str__(self):
         return (
+            "[magenta]"
+            "TUNNEL: "
             f'{self.ssh_process.username.split("\\")[-1]}@'
             f"{self.ssh_process.arguments.destination_host}:"
             f"{self.ssh_process.arguments.destination_port} "
             f"({self.ssh_process.pid})"
+            "[/magenta]"
         )
 
     @staticmethod

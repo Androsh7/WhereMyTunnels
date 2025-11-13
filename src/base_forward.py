@@ -17,6 +17,11 @@ class Forward:
     forward_type: Literal[FORWARD_TYPES] = field(
         validator=validators.and_(validators.instance_of(str), validators.in_(FORWARD_TYPES))
     )
+    ssh_connection_destination: Union[IPv4Address, IPv6Address, str] = field(
+        validator=validators.or_(
+            validators.instance_of(IPv4Address), validators.instance_of(IPv6Address), validators.instance_of(str)
+        )
+    )
     source_port: int = field(
         validator=validators.and_(validators.instance_of(int), validators.ge(1), validators.le(65535))
     )
@@ -25,7 +30,7 @@ class Forward:
             validators.instance_of(IPv4Address), validators.instance_of(IPv6Address), validators.instance_of(str)
         )
     )
-    remote_port: int = field(
+    destination_port: int = field(
         validator=validators.and_(validators.instance_of(int), validators.ge(1), validators.le(65535))
     )
     gateway_ip: Optional[Union[IPv4Address, IPv6Address, str]] = field(
@@ -46,22 +51,53 @@ class Forward:
     )
 
     def __str__(self):
+        out_string = ""
+
+        # Print starting color
+        if self.malformed_message:
+            out_string += "[bold red]"
+        else:
+            out_string += "[green]"
+
+        # print local forward
         if self.forward_type == "local":
-            return (
-                f'{"[red]" if self.malformed_message else ""}'
-                f'{self.gateway_ip if self.gateway_ip else "127.0.0.1"}:{self.source_port} -> '
-                f"{self.destination_host}:{self.remote_port}"
-                f'{ " - " + self.malformed_message + "[/red]" if self.malformed_message else ""}'
-            )
-        return (
-            f'{"[red]" if self.malformed_message else ""}'
-            f"127.0.0.1:{self.remote_port}"
-            f' <- {self.gateway_ip if self.gateway_ip else "127.0.0.1"}:{self.source_port}'
-            f'{ " - " + self.malformed_message + "[/red]" if self.malformed_message else ""}'
-        )
+            if self.gateway_ip:
+                out_string += "LOCAL GATEWAY FORWARD: "
+                out_string += f'{self.gateway_ip}:{self.source_port}'
+            else:
+                out_string += "LOCAL FORWARD: "
+                out_string += f'127.0.0.1:{self.source_port}'
+
+            if self.destination_host != ip_address("127.0.0.1"):
+                out_string += f' -> {self.ssh_connection_destination}'
+                out_string += f' -> {self.destination_host}:{self.destination_port}'
+            else:
+                out_string += f' -> {self.ssh_connection_destination}:{self.destination_port}'
+        elif self.forward_type == "reverse":
+            if self.gateway_ip:
+                out_string += "REVERSE GATEWAY FORWARD: "
+            else:
+                out_string += "REVERSE FORWARD: "
+            
+            if self.destination_host != ip_address('127.0.0.1'):
+                out_string += f'{self.destination_host}:{self.destination_port} <- '
+                out_string += f'127.0.0.1 <- '
+            else:
+                out_string += f'{self.destination_host}:{self.destination_port} <- '
+            
+            out_string += f'{self.ssh_connection_destination}:{self.source_port}'
+
+        # print ending color
+        if self.malformed_message:
+            out_string += f' - {self.malformed_message}'
+            out_string += "[/bold red]"
+        else:
+            out_string += "[/green]"
+
+        return out_string
 
     @classmethod
-    def from_argument(cls, forward_type: Literal[FORWARD_TYPES], argument: str):
+    def from_argument(cls, forward_type: Literal[FORWARD_TYPES], argument: str, ssh_connection_destination: Union[IPv4Address, IPv6Address, str]):
         split_arguments = Forward.split_forward_arguments(argument)
 
         try:
@@ -78,9 +114,10 @@ class Forward:
                 gateway_ip = split_arguments[-4]
         return cls(
             forward_type=forward_type,
+            ssh_connection_destination=ssh_connection_destination,
             source_port=int(split_arguments[-3]),
             destination_host=destination_host,
-            remote_port=int(split_arguments[-1]),
+            destination_port=int(split_arguments[-1]),
             gateway_ip=gateway_ip,
         )
 

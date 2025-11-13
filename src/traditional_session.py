@@ -28,6 +28,6 @@ class TraditionalSession(BaseSsh):
         return cls(
             ssh_process=process,
             ssh_type="traditional_session",
-            forwards=None,
+            forwards=[],
             socket_file=None,
         )

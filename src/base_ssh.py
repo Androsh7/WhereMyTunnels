@@ -20,15 +20,19 @@ class BaseSsh:
     )
     ssh_process: SshProcess = field(validator=validators.instance_of(SshProcess))
     socket_file: Optional[str] = field(validator=validators.optional(str))
-    forwards: list[Forward] = field(
+    forwards: list[Forward] = field( factory=list,
         validator=validators.optional(
             validators.deep_iterable(
                 member_validator=validators.instance_of(Forward), iterable_validator=validators.instance_of(list)
             )
         )
     )
-    attached_connection: Optional[psutil._common.sconn] = field(
-        default=None, validator=validators.optional(psutil._common.sconn)
+    attached_connections: list[psutil._common.pconn] = field(
+        factory=list,
+        validator=validators.deep_iterable(
+            member_validator=validators.instance_of(psutil._common.pconn),
+            iterable_validator=validators.instance_of(list),
+        ),
     )
 
     @classmethod
@@ -47,24 +51,23 @@ class BaseSsh:
             # Create forward object
             if argument not in ("L", "R"):
                 continue
-            forward = Forward.from_argument(forward_type=f'{"local" if argument == "L" else "reverse"}', argument=value)
+            forward = Forward.from_argument(forward_type=f'{"local" if argument == "L" else "reverse"}', argument=value, ssh_connection_destination=process.arguments.destination_host)
 
             # Attach connections
             for index, connection in enumerate(process.connections):
-                if (
-                    forward.forward_type == "local"
-                    and connection.status == "LISTEN"
-                    and connection.laddr.port == forward.source_port
-                ):
-                    forward.attached_connections.append(connection)
-                    del process.connections[index]
+                if forward.forward_type == "local":
+                    if (connection.status == "LISTEN" and connection.laddr.port == forward.source_port) or (
+                        connection.status == "ESTABLISHED" and connection.laddr.port == forward.source_port
+                    ):
+                        forward.attached_connections.append(connection)
+                        process.connections[index] = None
                 elif (
                     forward.forward_type == "reverse"
                     and connection.status == "LISTEN"
                     and connection.raddr.port == forward.source_port
                 ):
                     forward.attached_connections.append(connection)
-                    del process.connections[index]
+                    process.connections[index] = None
 
             # Mark forwards with missing connections as malformed
             if len(forward.attached_connections) == 0:

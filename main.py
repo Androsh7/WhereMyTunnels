@@ -1,14 +1,13 @@
 """Main logic for WhereMyTunnels"""
 
 # Standard libraries
+import argparse
 import re
-from typing import Union
 
 # Third-party libraries
 import psutil
 import time
 from rich.console import Console, Group
-from rich.text import Text
 from rich.tree import Tree
 from rich.live import Live
 
@@ -20,6 +19,7 @@ from src.socket_forward import SocketForward
 from src.traditional_tunnel import TraditionalTunnel
 from src.traditional_session import TraditionalSession
 from src.ssh_process import SshProcess
+from src.default import VERSION
 
 console = Console()
 
@@ -50,32 +50,42 @@ def get_ssh_processes() -> list[BaseSsh]:
     return out_list
 
 
-def print_connection(connection: psutil._common.pconn):
-    if connection.status == "LISTEN":
-        return "[blue]" f"LISTEN {connection.laddr.ip}:{connection.laddr.port}" "[/blue]"
-    elif connection.status == "ESTABLISHED":
-        return (
-            "[blue]"
-            f"ESTABLISHED {connection.laddr.ip}:{connection.laddr.port} -> "
-            f"{connection.raddr.ip}:{connection.raddr.port}"
-            "[/blue]"
-        )
-    return str(connection)
+def build_connection_branches(parent_branch: Tree, connection_list: list[psutil._common.pconn]):
+    for connection in connection_list:
+        if connection is None:
+            continue
+        elif connection.status == "LISTEN":
+            parent_branch.add("[blue]" f"LISTEN {connection.laddr.ip}:{connection.laddr.port}" "[/blue]")
+        elif connection.status == "ESTABLISHED":
+            parent_branch.add(
+                "[green]"
+                f"ESTABLISHED {connection.laddr.ip}:{connection.laddr.port} -> "
+                f"{connection.raddr.ip}:{connection.raddr.port}"
+                "[/green]"
+            )
+        else:
+            parent_branch.add(str(connection))
 
 
 def build_forward_branches(parent_branch: Tree, forward_list: list[Forward]):
     for forward in forward_list:
         sub_branch = parent_branch.add(str(forward))
-        for connection in forward.attached_connections:
-            sub_branch.add(print_connection(connection))
+        #build_connection_branches(parent_branch=sub_branch, connection_list=forward.attached_connections)
 
+def build_process_branch(parent_tree: Tree, ssh_process: BaseSsh) -> Tree:
+    branch = parent_tree.add(str(ssh_process))
+    branch.add(f"[yellow]ARGS: {ssh_process.ssh_process.raw_arguments}[/yellow]")
+    #build_connection_branches(parent_branch=branch, connection_list=ssh_process.ssh_process.connections)
+    build_forward_branches(parent_branch=branch, forward_list=ssh_process.forwards)
+    return branch
 
 def master_socket_ssh_tree(debug: bool, ssh_process_list: list[BaseSsh]) -> Tree:
-    tree = Tree("[bold]Master Sockets[/bold]")
+    tree = Tree("[bold cyan]Master Sockets[/bold cyan]")
     for ssh_process in ssh_process_list:
         if ssh_process.ssh_type != "master_socket":
             continue
         # Create a branch for the master socket
+        build_process_branch
         branch = tree.add(str(ssh_process))
         if debug:
             branch.add(f"[yellow]{ssh_process.ssh_process.raw_arguments}[/yellow]")
@@ -100,33 +110,20 @@ def master_socket_ssh_tree(debug: bool, ssh_process_list: list[BaseSsh]) -> Tree
 
 def traditional_tunnel_ssh_tree(debug: bool, ssh_process_list: list[BaseSsh]) -> Tree:
 
-    tree = Tree("[bold]Traditional Tunnels[/bold]")
+    tree = Tree("[bold magenta]Traditional Tunnels[/bold magenta]")
     for ssh_process in ssh_process_list:
         if ssh_process.ssh_type != "traditional_tunnel":
             continue
-        branch = tree.add(str(ssh_process))
-
-        # Print the raw arguments
-        if debug:
-            branch.add(f"[yellow]{ssh_process.ssh_process.raw_arguments}[/yellow]")
-            for connection in ssh_process.ssh_process.connections:
-                branch.add(print_connection(connection))
-
-        # Create sub-branches for forwards
-        build_forward_branches(parent_branch=branch, forward_list=ssh_process.forwards)
+        build_process_branch(parent_tree=tree, ssh_process=ssh_process)
     return tree
 
 
 def traditional_session_ssh_tree(debug: bool, ssh_process_list: list[BaseSsh]) -> Tree:
-    tree = Tree("[bold]Traditional Sessions[/bold]")
+    tree = Tree("[bold yellow]Traditional Sessions[/bold yellow]")
     for ssh_process in ssh_process_list:
         if ssh_process.ssh_type != "traditional_session":
             continue
-        branch = tree.add(str(ssh_process))
-
-        # Print the raw arguments
-        if debug:
-            branch.add(f"[yellow]{ssh_process.ssh_process.raw_arguments}[/yellow]")
+        build_process_branch(parent_tree=tree, ssh_process=ssh_process)
     return tree
 
 
@@ -149,8 +146,24 @@ def render_tree(debug: bool = False, interval: float = 2.0):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        prog="WhereMyTunnels",
+        description="Tool for viewing current SSH connections"
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"WhereMyTunnels v{VERSION}"
+    )
+    parser.add_argument(
+        "--interval",
+        type=int,
+        default=2,
+        help="Refresh interval in seconds (default: 2)"
+    )
+    args = parser.parse_args()
     try:
-        console.rule(Text("WhereMyTunnels v1.0.0", style="bold green"), style="bold green", characters="=")
-        render_tree(debug=True)
+        console.rule(f"[bold #39ff14]WhereMyTunnels[/bold #39ff14] [#39ff14]v{VERSION}[/#39ff14]", style="#39ff14", characters="=")
+        render_tree(debug=True, interval=args.interval)
     except KeyboardInterrupt:
         pass
