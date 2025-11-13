@@ -9,7 +9,7 @@ from typing import Literal, Union, Optional
 from attrs import define, field, validators
 
 # Project libraries
-from src.ssh_types.default import FORWARD_TYPES
+from src.default import FORWARD_TYPES
 
 
 @define

@@ -11,7 +11,7 @@ from attrs import define, field, validators
 from loguru import logger
 
 # Project libraries
-from src.ssh_types.default import SSH_FLAGS, SSH_VALUE_ARGUMENTS
+from src.default import SSH_FLAGS, SSH_VALUE_ARGUMENTS
 
 
 @define

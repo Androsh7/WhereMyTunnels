@@ -4,9 +4,9 @@
 from attrs import define, field, validators
 
 # Project libraries
-from src.ssh_types.base_ssh import BaseSsh
-from src.ssh_types.base_forward import Forward
-from src.ssh_types.ssh_process import SshProcess
+from src.base_ssh import BaseSsh
+from src.base_forward import Forward
+from src.ssh_process import SshProcess
 
 
 @define

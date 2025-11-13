@@ -13,13 +13,13 @@ from rich.tree import Tree
 from rich.live import Live
 
 # Project libraries
-from src.ssh_types.base_ssh import BaseSsh
-from src.ssh_types.base_forward import Forward
-from src.ssh_types.master_socket import MasterSocket
-from src.ssh_types.socket_forward import SocketForward
-from src.ssh_types.traditional_tunnel import TraditionalTunnel
-from src.ssh_types.traditional_session import TraditionalSession
-from src.ssh_types.ssh_process import SshProcess
+from src.base_ssh import BaseSsh
+from src.base_forward import Forward
+from src.master_socket import MasterSocket
+from src.socket_forward import SocketForward
+from src.traditional_tunnel import TraditionalTunnel
+from src.traditional_session import TraditionalSession
+from src.ssh_process import SshProcess
 
 console = Console()
 
@@ -52,15 +52,16 @@ def get_ssh_processes() -> list[BaseSsh]:
 
 def print_connection(connection: psutil._common.pconn):
     if connection.status == "LISTEN":
-        return ("[blue]"
-            f'LISTEN {connection.laddr.ip}:{connection.laddr.port}'
-            "[/blue]")
+        return "[blue]" f"LISTEN {connection.laddr.ip}:{connection.laddr.port}" "[/blue]"
     elif connection.status == "ESTABLISHED":
-        return ("[blue]"
-            f'ESTABLISHED {connection.laddr.ip}:{connection.laddr.port} -> '
-            f'{connection.raddr.ip}:{connection.raddr.port}'
-            "[/blue]")
+        return (
+            "[blue]"
+            f"ESTABLISHED {connection.laddr.ip}:{connection.laddr.port} -> "
+            f"{connection.raddr.ip}:{connection.raddr.port}"
+            "[/blue]"
+        )
     return str(connection)
+
 
 def build_forward_branches(parent_branch: Tree, forward_list: list[Forward]):
     for forward in forward_list:

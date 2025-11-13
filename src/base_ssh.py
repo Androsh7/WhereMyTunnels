@@ -6,11 +6,11 @@ from typing import Literal, Optional
 
 # Third-party libraries
 from attrs import define, field, validators
-from src.ssh_types.ssh_process import SshProcess
+from src.ssh_process import SshProcess
 
 # Project libraries
-from src.ssh_types.default import SSH_TYPES
-from src.ssh_types.base_forward import Forward
+from src.default import SSH_TYPES
+from src.base_forward import Forward
 
 
 @define
