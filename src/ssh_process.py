@@ -45,16 +45,14 @@ class SshArguments:
     @classmethod
     def from_command_list(cls, cmd_list: list[str]):
         executable_name = cmd_list[0]
+        username = None
         destination_host = None
         destination_port = 22
         flags = []
         value_args = []
 
-        # logger.debug(f"Parsing command list: {cmd_list}")
-        # logger.debug(f'executable_name="{executable_name}"')
         argument_index = 1
         while argument_index < len(cmd_list):
-            # logger.debug(f"Parsing argument index {argument_index}: {cmd_list[argument_index]}")
 
             # Search for arguments
             if cmd_list[argument_index].startswith("-"):
@@ -72,12 +70,10 @@ class SshArguments:
 
                         # Normalize arguments so "-D9050" and ["-D", "9050"] both appear as ("D", "9050")
                         if len(arg_value := cmd_list[argument_index][char_index + 1 :]) == 0:
-                            # logger.debug(f"Parsing argument index {argument_index + 1} for argument value: {cmd_list[argument_index + 1]}")
                             arg_value = cmd_list[argument_index + 1]
                             argument_index += 1
 
                         # Add the arg_value and arg_type to the value_args list
-                        # logger.debug(f'Found value_argument: argument="{arg_type}", value="{arg_value}"')
                         value_args.append((arg_type, arg_value))
                         break
 
