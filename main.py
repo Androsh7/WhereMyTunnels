@@ -89,26 +89,13 @@ def master_socket_ssh_tree(debug: bool, ssh_process_list: list[BaseSsh]) -> Tree
         if ssh_process.ssh_type != "master_socket":
             continue
         # Create a branch for the master socket
-        build_process_branch
-        branch = tree.add(str(ssh_process))
-        if debug:
-            branch.add(f"[yellow]{ssh_process.ssh_process.raw_arguments}[/yellow]")
-
-        # Create sub-branches for forwards
-        build_forward_branches(parent_branch=branch, forward_list=ssh_process.forwards)
+        branch = build_process_branch(tree, ssh_process=ssh_process)
 
         # Create a sub-branch for any attached stream socket
         for ssh_sub_process in ssh_process_list:
             if ssh_sub_process.ssh_type != "socket_forward" or ssh_process.socket_file != ssh_sub_process.socket_file:
                 continue
-            sub_branch = branch.add(str(ssh_sub_process))
-
-            # Create sub-branches for forwards
-            build_forward_branches(parent_branch=sub_branch, forward_list=ssh_sub_process.forwards)
-
-            # Print the raw arguments
-            if debug:
-                sub_branch.add(f"[yellow]{ssh_sub_process.ssh_process.raw_arguments}[/yellow]")
+            build_process_branch(parent_tree=branch, ssh_process=ssh_sub_process)
     return tree
 
 
