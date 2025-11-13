@@ -1,6 +1,7 @@
 """Defines the Forward class"""
 
 # Standard libraries
+import psutil
 from ipaddress import ip_address, IPv4Address, IPv6Address
 from typing import Literal, Union, Optional
 
@@ -34,6 +35,7 @@ class Forward:
         ),
     )
     malformed_message: Optional[str] = field(default=None, validator=validators.optional(str))
+    attached_connection: Optional[psutil._common.sconn] = field(default=None, validator=validators.optional(psutil._common.sconn))
 
     def __str__(self):
         if self.forward_type == "local":
@@ -43,13 +45,12 @@ class Forward:
                 f"{self.destination_host}:{self.remote_port}"
                 f'{ " - " + self.malformed_message + "[/red]" if self.malformed_message else ""}'
             )
-        else:
-            return (
-                f'{"[red]" if self.malformed_message else ""}'
-                f"127.0.0.1:{self.remote_port}"
-                f' <- {self.gateway_ip if self.gateway_ip else "127.0.0.1"}:{self.source_port}'
-                f'{ " - " + self.malformed_message + "[/red]" if self.malformed_message else ""}'
-            )
+        return (
+            f'{"[red]" if self.malformed_message else ""}'
+            f"127.0.0.1:{self.remote_port}"
+            f' <- {self.gateway_ip if self.gateway_ip else "127.0.0.1"}:{self.source_port}'
+            f'{ " - " + self.malformed_message + "[/red]" if self.malformed_message else ""}'
+        )
 
     @classmethod
     def from_argument(cls, forward_type: Literal[FORWARD_TYPES], argument: str):
