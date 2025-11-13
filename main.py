@@ -14,6 +14,7 @@ from rich.live import Live
 
 # Project libraries
 from src.ssh_types.base_ssh import BaseSsh
+from src.ssh_types.base_forward import Forward
 from src.ssh_types.master_socket import MasterSocket
 from src.ssh_types.socket_forward import SocketForward
 from src.ssh_types.traditional_tunnel import TraditionalTunnel
@@ -49,6 +50,25 @@ def get_ssh_processes() -> list[BaseSsh]:
     return out_list
 
 
+def print_connection(connection: psutil._common.pconn):
+    if connection.status == "LISTEN":
+        return ("[blue]"
+            f'LISTEN {connection.laddr.ip}:{connection.laddr.port}'
+            "[/blue]")
+    elif connection.status == "ESTABLISHED":
+        return ("[blue]"
+            f'ESTABLISHED {connection.laddr.ip}:{connection.laddr.port} -> '
+            f'{connection.raddr.ip}:{connection.raddr.port}'
+            "[/blue]")
+    return str(connection)
+
+def build_forward_branches(parent_branch: Tree, forward_list: list[Forward]):
+    for forward in forward_list:
+        sub_branch = parent_branch.add(str(forward))
+        for connection in forward.attached_connections:
+            sub_branch.add(print_connection(connection))
+
+
 def master_socket_ssh_tree(debug: bool, ssh_process_list: list[BaseSsh]) -> Tree:
     tree = Tree("[bold]Master Sockets[/bold]")
     for ssh_process in ssh_process_list:
@@ -60,14 +80,16 @@ def master_socket_ssh_tree(debug: bool, ssh_process_list: list[BaseSsh]) -> Tree
             branch.add(f"[yellow]{ssh_process.ssh_process.raw_arguments}[/yellow]")
 
         # Create sub-branches for forwards
-        for forward in ssh_process.forwards:
-            branch.add(str(forward))
+        build_forward_branches(parent_branch=branch, forward_list=ssh_process.forwards)
 
         # Create a sub-branch for any attached stream socket
         for ssh_sub_process in ssh_process_list:
             if ssh_sub_process.ssh_type != "socket_forward" or ssh_process.socket_file != ssh_sub_process.socket_file:
                 continue
             sub_branch = branch.add(str(ssh_sub_process))
+
+            # Create sub-branches for forwards
+            build_forward_branches(parent_branch=sub_branch, forward_list=ssh_sub_process.forwards)
 
             # Print the raw arguments
             if debug:
@@ -86,10 +108,11 @@ def traditional_tunnel_ssh_tree(debug: bool, ssh_process_list: list[BaseSsh]) ->
         # Print the raw arguments
         if debug:
             branch.add(f"[yellow]{ssh_process.ssh_process.raw_arguments}[/yellow]")
+            for connection in ssh_process.ssh_process.connections:
+                branch.add(print_connection(connection))
 
-        # Print all forwards
-        for forward in ssh_process.forwards:
-            branch.add(str(forward))
+        # Create sub-branches for forwards
+        build_forward_branches(parent_branch=branch, forward_list=ssh_process.forwards)
     return tree
 
 

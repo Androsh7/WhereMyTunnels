@@ -1,6 +1,7 @@
 """Defines the SshProcess, SshArguments, and ValueArgument classes"""
 
 # Standard libraries
+import psutil
 from typing import Union
 from ipaddress import IPv4Address, IPv6Address, ip_address
 
@@ -120,7 +121,12 @@ class SshProcess:
     """Stores the SSH process information"""
 
     username: str = field(validator=validators.instance_of(str))
-    connections: list = field(validator=validators.instance_of(list))
+    connections: list[psutil._common.pconn] = field(
+        validator=validators.deep_iterable(
+            member_validator=validators.instance_of(psutil._common.pconn),
+            iterable_validator=validators.instance_of(list),
+        )
+    )
     pid: int = field(validator=validators.and_(validators.instance_of(int), validators.ge(1)))
     arguments: SshArguments = field(validator=validators.instance_of(SshArguments))
     raw_arguments: str = field(validator=validators.instance_of(str))

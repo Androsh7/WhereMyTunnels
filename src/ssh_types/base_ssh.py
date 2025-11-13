@@ -1,6 +1,7 @@
 """Defines the BaseSsh class"""
 
 # Standard libraries
+import psutil
 from typing import Literal, Optional
 
 # Third-party libraries
@@ -26,6 +27,9 @@ class BaseSsh:
             )
         )
     )
+    attached_connection: Optional[psutil._common.sconn] = field(
+        default=None, validator=validators.optional(psutil._common.sconn)
+    )
 
     @classmethod
     def is_process_this(process: SshProcess):
@@ -39,10 +43,34 @@ class BaseSsh:
     def build_forward_list(process: SshProcess) -> list[Forward]:
         out_list = []
         for argument, value in process.arguments.value_arguments:
-            if argument == "L":
-                out_list.append(Forward.from_argument(forward_type="local", argument=value))
-            elif argument == "R":
-                out_list.append(Forward.from_argument(forward_type="reverse", argument=value))
+
+            # Create forward object
+            if argument not in ("L", "R"):
+                continue
+            forward = Forward.from_argument(forward_type=f'{"local" if argument == "L" else "reverse"}', argument=value)
+
+            # Attach connections
+            for index, connection in enumerate(process.connections):
+                if (
+                    forward.forward_type == "local"
+                    and connection.status == "LISTEN"
+                    and connection.laddr.port == forward.source_port
+                ):
+                    forward.attached_connections.append(connection)
+                    del process.connections[index]
+                elif (
+                    forward.forward_type == "reverse"
+                    and connection.status == "LISTEN"
+                    and connection.raddr.port == forward.source_port
+                ):
+                    forward.attached_connections.append(connection)
+                    del process.connections[index]
+
+            # Mark forwards with missing connections as malformed
+            if len(forward.attached_connections) == 0:
+                forward.malformed_message = "NO ATTACHED CONNECTION"
+            out_list.append(forward)
+
         return out_list
 
     @staticmethod

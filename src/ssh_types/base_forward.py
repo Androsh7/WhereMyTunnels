@@ -30,12 +30,20 @@ class Forward:
     )
     gateway_ip: Optional[Union[IPv4Address, IPv6Address, str]] = field(
         default=None,
-        validator=validators.or_(
-            validators.optional(IPv4Address), validators.instance_of(IPv6Address), validators.instance_of(str)
+        validator=validators.optional(
+            validators.or_(
+                validators.instance_of(IPv4Address), validators.instance_of(IPv6Address), validators.instance_of(str)
+            )
         ),
     )
-    malformed_message: Optional[str] = field(default=None, validator=validators.optional(str))
-    attached_connection: Optional[psutil._common.sconn] = field(default=None, validator=validators.optional(psutil._common.sconn))
+    malformed_message: Optional[str] = field(default=None, validator=validators.optional(validators.instance_of(str)))
+    attached_connections: list[psutil._common.pconn] = field(
+        factory=list,
+        validator=validators.deep_iterable(
+            member_validator=validators.instance_of(psutil._common.pconn),
+            iterable_validator=validators.instance_of(list),
+        ),
+    )
 
     def __str__(self):
         if self.forward_type == "local":
