@@ -51,31 +51,35 @@ def get_ssh_processes() -> list[BaseSsh]:
 
 
 def build_connection_branches(parent_branch: Tree, connection_list: list[psutil._common.pconn]):
+    out_list = []
     for connection in connection_list:
         if connection is None:
             continue
         elif connection.status == "LISTEN":
-            parent_branch.add("[blue]" f"LISTEN {connection.laddr.ip}:{connection.laddr.port}" "[/blue]")
+            out_list.append("[blue]" f"LISTEN {connection.laddr.ip}:{connection.laddr.port}" "[/blue]")
         elif connection.status == "ESTABLISHED":
-            parent_branch.add(
+            out_list.append(
                 "[green]"
                 f"ESTABLISHED {connection.laddr.ip}:{connection.laddr.port} -> "
                 f"{connection.raddr.ip}:{connection.raddr.port}"
                 "[/green]"
             )
         else:
-            parent_branch.add(str(connection))
+            out_list.append(str(connection))
+    out_list.sort()
+    for connection_str in out_list:
+        parent_branch.add(connection_str)
 
 
 def build_forward_branches(parent_branch: Tree, forward_list: list[Forward]):
     for forward in forward_list:
         sub_branch = parent_branch.add(str(forward))
-        #build_connection_branches(parent_branch=sub_branch, connection_list=forward.attached_connections)
+        build_connection_branches(parent_branch=sub_branch, connection_list=forward.attached_connections)
 
 def build_process_branch(parent_tree: Tree, ssh_process: BaseSsh) -> Tree:
     branch = parent_tree.add(str(ssh_process))
     branch.add(f"[yellow]ARGS: {ssh_process.ssh_process.raw_arguments}[/yellow]")
-    #build_connection_branches(parent_branch=branch, connection_list=ssh_process.ssh_process.connections)
+    build_connection_branches(parent_branch=branch, connection_list=ssh_process.ssh_process.connections)
     build_forward_branches(parent_branch=branch, forward_list=ssh_process.forwards)
     return branch
 
