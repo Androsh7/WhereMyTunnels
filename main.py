@@ -29,12 +29,8 @@ def get_ssh_raw_processes() -> list[psutil.Process]:
     for process in psutil.process_iter(["pid", "username", "name", "cmdline"]):
         try:
             name = (process.info.get("name") or "").strip()
-            cmd = process.info.get("cmdline") or []
-
-            # Match "ssh" but not "sshd"
             if SSH_NAME_RE.search(name):
                 yield SshProcess.from_process(process)
-
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
 

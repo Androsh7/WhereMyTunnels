@@ -33,12 +33,23 @@ class Forward:
             validators.optional(IPv4Address), validators.instance_of(IPv6Address), validators.instance_of(str)
         ),
     )
+    malformed_message: Optional[str] = field(default=None, validator=validators.optional(str))
 
     def __str__(self):
         if self.forward_type == "local":
-            return f'{self.gateway_ip if self.gateway_ip else "127.0.0.1"}:{self.source_port} -> {self.destination_host}:{self.remote_port}'
+            return (
+                f'{"[red]" if self.malformed_message else ""}'
+                f'{self.gateway_ip if self.gateway_ip else "127.0.0.1"}:{self.source_port} -> '
+                f"{self.destination_host}:{self.remote_port}"
+                f'{ " - " + self.malformed_message + "[/red]" if self.malformed_message else ""}'
+            )
         else:
-            return f'127.0.0.1:{self.remote_port} <- {self.gateway_ip if self.gateway_ip else "127.0.0.1"}:{self.source_port}'
+            return (
+                f'{"[red]" if self.malformed_message else ""}'
+                f"127.0.0.1:{self.remote_port}"
+                f' <- {self.gateway_ip if self.gateway_ip else "127.0.0.1"}:{self.source_port}'
+                f'{ " - " + self.malformed_message + "[/red]" if self.malformed_message else ""}'
+            )
 
     @classmethod
     def from_argument(cls, forward_type: Literal[FORWARD_TYPES], argument: str):

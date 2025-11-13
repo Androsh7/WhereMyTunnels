@@ -12,7 +12,12 @@ from src.ssh_types.ssh_process import SshProcess
 class TraditionalSession(BaseSsh):
 
     def __str__(self):
-        return f'{self.ssh_process.username.split("\\")[-1]}@{self.ssh_process.arguments.destination_host}:{self.ssh_process.arguments.destination_port} ({self.ssh_process.pid})'
+        return (
+            f'{self.ssh_process.username.split("\\")[-1]}@'
+            f"{self.ssh_process.arguments.destination_host}:"
+            f"{self.ssh_process.arguments.destination_port} "
+            f"({self.ssh_process.pid})"
+        )
 
     @staticmethod
     def is_process_this(process: SshProcess) -> bool:
@@ -23,5 +28,6 @@ class TraditionalSession(BaseSsh):
         return cls(
             ssh_process=process,
             ssh_type="traditional_session",
+            forwards=None,
             socket_file=None,
         )

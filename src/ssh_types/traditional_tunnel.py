@@ -11,10 +11,14 @@ from src.ssh_types.ssh_process import SshProcess
 
 @define
 class TraditionalTunnel(BaseSsh):
-    forwards: list[Forward] = field(validator=validators.instance_of(list))
 
     def __str__(self):
-        return f'{self.ssh_process.username.split("\\")[-1]}@{self.ssh_process.arguments.destination_host}:{self.ssh_process.arguments.destination_port} ({self.ssh_process.pid})'
+        return (
+            f'{self.ssh_process.username.split("\\")[-1]}@'
+            f"{self.ssh_process.arguments.destination_host}:"
+            f"{self.ssh_process.arguments.destination_port} "
+            f"({self.ssh_process.pid})"
+        )
 
     @staticmethod
     def is_process_this(process: SshProcess) -> bool:
@@ -37,7 +41,7 @@ class TraditionalTunnel(BaseSsh):
     def from_process(cls, process: SshProcess):
         return cls(
             ssh_process=process,
-            forwards=BaseSsh.get_forward_list(process),
+            forwards=BaseSsh.build_forward_list(process),
             ssh_type="traditional_tunnel",
             socket_file=None,
         )

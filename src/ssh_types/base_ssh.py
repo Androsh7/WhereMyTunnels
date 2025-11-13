@@ -19,6 +19,13 @@ class BaseSsh:
     )
     ssh_process: SshProcess = field(validator=validators.instance_of(SshProcess))
     socket_file: Optional[str] = field(validator=validators.optional(str))
+    forwards: list[Forward] = field(
+        validator=validators.optional(
+            validators.deep_iterable(
+                member_validator=validators.instance_of(Forward), iterable_validator=validators.instance_of(list)
+            )
+        )
+    )
 
     @classmethod
     def is_process_this(process: SshProcess):
@@ -29,7 +36,7 @@ class BaseSsh:
         pass
 
     @staticmethod
-    def get_forward_list(process: SshProcess) -> list[Forward]:
+    def build_forward_list(process: SshProcess) -> list[Forward]:
         out_list = []
         for argument, value in process.arguments.value_arguments:
             if argument == "L":

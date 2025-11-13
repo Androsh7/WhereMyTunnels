@@ -11,10 +11,15 @@ from src.ssh_types.ssh_process import SshProcess
 
 @define
 class SocketForward(BaseSsh):
-    forwards: list[Forward] = field(validator=validators.instance_of(list))
 
     def __str__(self):
-        return f'{self.socket_file} -> {self.ssh_process.username.split("\\")[-1]}@{self.ssh_process.arguments.destination_host}:{self.ssh_process.arguments.destination_port} ({self.ssh_process.pid})'
+        return (
+            f"{self.socket_file} -> "
+            f'{self.ssh_process.username.split("\\")[-1]}@'
+            f"{self.ssh_process.arguments.destination_host}:"
+            f"{self.ssh_process.arguments.destination_port} "
+            f"({self.ssh_process.pid})"
+        )
 
     @staticmethod
     def is_process_this(process: SshProcess) -> bool:
@@ -48,6 +53,6 @@ class SocketForward(BaseSsh):
         return cls(
             ssh_process=process,
             socket_file=BaseSsh.get_socket_file(process),
-            forwards=BaseSsh.get_forward_list(process),
+            forwards=BaseSsh.build_forward_list(process),
             ssh_type="socket_forward",
         )
