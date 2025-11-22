@@ -16,7 +16,7 @@ class SocketForward(BaseSsh):
         return (
             "[magenta]"
             f"{self.socket_file} -> "
-            f'{self.ssh_process.username.split("\\")[-1]}@'
+            f'{self.ssh_process.username.split("\\")[-1].lower()}@'
             f"{self.ssh_process.arguments.destination_host}:"
             f"{self.ssh_process.arguments.destination_port} "
             f"({self.ssh_process.pid})"

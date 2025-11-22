@@ -63,33 +63,33 @@ class Forward:
         if self.forward_type == "local":
             if self.gateway_ip:
                 out_string += "LOCAL GATEWAY FORWARD: "
-                out_string += f'{self.gateway_ip}:{self.source_port}'
+                out_string += f"{self.gateway_ip}:{self.source_port}"
             else:
                 out_string += "LOCAL FORWARD: "
-                out_string += f'127.0.0.1:{self.source_port}'
+                out_string += f"127.0.0.1:{self.source_port}"
 
             if self.destination_host != ip_address("127.0.0.1"):
-                out_string += f' -> {self.ssh_connection_destination}'
-                out_string += f' -> {self.destination_host}:{self.destination_port}'
+                out_string += f" -> {self.ssh_connection_destination}"
+                out_string += f" -> {self.destination_host}:{self.destination_port}"
             else:
-                out_string += f' -> {self.ssh_connection_destination}:{self.destination_port}'
+                out_string += f" -> {self.ssh_connection_destination}:{self.destination_port}"
         elif self.forward_type == "reverse":
             if self.gateway_ip:
                 out_string += "REVERSE GATEWAY FORWARD: "
             else:
                 out_string += "REVERSE FORWARD: "
-            
-            if self.destination_host != ip_address('127.0.0.1'):
-                out_string += f'{self.destination_host}:{self.destination_port} <- '
-                out_string += f'127.0.0.1 <- '
+
+            if self.destination_host != ip_address("127.0.0.1"):
+                out_string += f"{self.destination_host}:{self.destination_port} <- "
+                out_string += f"127.0.0.1 <- "
             else:
-                out_string += f'{self.destination_host}:{self.destination_port} <- '
-            
-            out_string += f'{self.ssh_connection_destination}:{self.source_port}'
+                out_string += f"{self.destination_host}:{self.destination_port} <- "
+
+            out_string += f"{self.ssh_connection_destination}:{self.source_port}"
 
         # print ending color
         if self.malformed_message:
-            out_string += f' - {self.malformed_message}'
+            out_string += f" - {self.malformed_message}"
             out_string += "[/bold red]"
         else:
             out_string += "[/green]"
@@ -97,7 +97,12 @@ class Forward:
         return out_string
 
     @classmethod
-    def from_argument(cls, forward_type: Literal[FORWARD_TYPES], argument: str, ssh_connection_destination: Union[IPv4Address, IPv6Address, str]):
+    def from_argument(
+        cls,
+        forward_type: Literal[FORWARD_TYPES],
+        argument: str,
+        ssh_connection_destination: Union[IPv4Address, IPv6Address, str],
+    ):
         split_arguments = Forward.split_forward_arguments(argument)
 
         try:

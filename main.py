@@ -76,12 +76,14 @@ def build_forward_branches(parent_branch: Tree, forward_list: list[Forward]):
         sub_branch = parent_branch.add(str(forward))
         build_connection_branches(parent_branch=sub_branch, connection_list=forward.attached_connections)
 
+
 def build_process_branch(parent_tree: Tree, ssh_process: BaseSsh) -> Tree:
     branch = parent_tree.add(str(ssh_process))
     branch.add(f"[yellow]ARGS: {ssh_process.ssh_process.raw_arguments}[/yellow]")
     build_connection_branches(parent_branch=branch, connection_list=ssh_process.ssh_process.connections)
     build_forward_branches(parent_branch=branch, forward_list=ssh_process.forwards)
     return branch
+
 
 def master_socket_ssh_tree(debug: bool, ssh_process_list: list[BaseSsh]) -> Tree:
     tree = Tree("[bold cyan]Master Sockets[/bold cyan]")
@@ -137,24 +139,16 @@ def render_tree(debug: bool = False, interval: float = 2.0):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        prog="WhereMyTunnels",
-        description="Tool for viewing current SSH connections"
-    )
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=f"WhereMyTunnels v{VERSION}"
-    )
-    parser.add_argument(
-        "--interval",
-        type=int,
-        default=2,
-        help="Refresh interval in seconds (default: 2)"
-    )
+    parser = argparse.ArgumentParser(prog="WhereMyTunnels", description="Tool for viewing current SSH connections")
+    parser.add_argument("--version", action="version", version=f"WhereMyTunnels v{VERSION}")
+    parser.add_argument("--interval", type=int, default=2, help="Refresh interval in seconds (default: 2)")
     args = parser.parse_args()
     try:
-        console.rule(f"[bold #39ff14]WhereMyTunnels[/bold #39ff14] [#39ff14]v{VERSION}[/#39ff14]", style="#39ff14", characters="=")
+        console.rule(
+            f"[bold #39ff14]WhereMyTunnels[/bold #39ff14] [#39ff14]v{VERSION}[/#39ff14]",
+            style="#39ff14",
+            characters="=",
+        )
         render_tree(debug=True, interval=args.interval)
     except KeyboardInterrupt:
         pass

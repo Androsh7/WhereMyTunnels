@@ -12,6 +12,7 @@ CASES = [
     (
         ["ssh", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -24,6 +25,7 @@ CASES = [
     (
         ["ssh", "-v", "-v", "-v", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -36,6 +38,7 @@ CASES = [
     (
         ["ssh", "-vvv", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -48,6 +51,7 @@ CASES = [
     (
         ["ssh", "-L", "8080:127.0.0.1:80", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -60,6 +64,7 @@ CASES = [
     (
         ["ssh", "-L8080:localhost:80", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -72,6 +77,7 @@ CASES = [
     (
         ["ssh", "-vvvL123:localhost:22", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -84,6 +90,7 @@ CASES = [
     (
         ["ssh", "-L", "8080:127.0.0.1:80", "-R", "0.0.0.0:2222:localhost:22", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -99,6 +106,7 @@ CASES = [
     (
         ["ssh", "-D", "1080", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -111,6 +119,7 @@ CASES = [
     (
         ["ssh", "-D9050", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -123,6 +132,7 @@ CASES = [
     (
         ["ssh", "-p", "2200", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=2200,
@@ -135,6 +145,7 @@ CASES = [
     (
         ["ssh", "-p2200", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=2200,
@@ -147,6 +158,7 @@ CASES = [
     (
         ["ssh", "-N", "-f", "-C", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -159,6 +171,7 @@ CASES = [
     (
         ["ssh", "-NfC", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -171,6 +184,7 @@ CASES = [
     (
         ["ssh", "-oStrictHostKeyChecking=no", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -183,6 +197,7 @@ CASES = [
     (
         ["ssh", "-o", "UserKnownHostsFile=/dev/null", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -195,6 +210,7 @@ CASES = [
     (
         ["ssh", "-o", "LogLevel=DEBUG", "-oStrictHostKeyChecking=no", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -210,6 +226,7 @@ CASES = [
     (
         ["ssh", "-L", "[::1]:2222:[2001:db8::1]:22", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -222,6 +239,7 @@ CASES = [
     (
         ["ssh", "-D[::]:9050", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -234,6 +252,7 @@ CASES = [
     (
         ["ssh", "-i", "~/.ssh/id_rsa", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -246,6 +265,7 @@ CASES = [
     (
         ["ssh", "-i~/.ssh/key.pem", "host"],
         SshArguments(
+            username=None,
             executable_name="ssh",
             destination_host="host",
             destination_port=22,
@@ -253,6 +273,19 @@ CASES = [
             flags=[],
         ),
         "identity_smashed",
+    ),
+    # 21) Username parsing
+    (
+        ["ssh", "user@host"],
+        SshArguments(
+            username="user",
+            executable_name="ssh",
+            destination_host="host",
+            destination_port=22,
+            value_arguments=[],
+            flags=[],
+        ),
+        "username_parsing",
     ),
 ]
 

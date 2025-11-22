@@ -20,12 +20,13 @@ class BaseSsh:
     )
     ssh_process: SshProcess = field(validator=validators.instance_of(SshProcess))
     socket_file: Optional[str] = field(validator=validators.optional(str))
-    forwards: list[Forward] = field( factory=list,
+    forwards: list[Forward] = field(
+        factory=list,
         validator=validators.optional(
             validators.deep_iterable(
                 member_validator=validators.instance_of(Forward), iterable_validator=validators.instance_of(list)
             )
-        )
+        ),
     )
     attached_connections: list[psutil._common.pconn] = field(
         factory=list,
@@ -51,7 +52,11 @@ class BaseSsh:
             # Create forward object
             if argument not in ("L", "R"):
                 continue
-            forward = Forward.from_argument(forward_type=f'{"local" if argument == "L" else "reverse"}', argument=value, ssh_connection_destination=process.arguments.destination_host)
+            forward = Forward.from_argument(
+                forward_type=f'{"local" if argument == "L" else "reverse"}',
+                argument=value,
+                ssh_connection_destination=process.arguments.destination_host,
+            )
 
             # Attach connections
             for index, connection in enumerate(process.connections):
