@@ -1,0 +1,53 @@
+ARG REPOSITORY_VERSION="1_1"
+ARG ARCHITECTURE="x86_64"
+FROM quay.io/pypa/musllinux_${REPOSITORY_VERSION}_${ARCHITECTURE}:latest
+WORKDIR /src
+
+# Install libraries
+RUN apk update \
+    && apk add \
+        gcc \
+        make \
+        git \
+        curl \
+        openssl-dev \
+        patchelf
+
+# Set LDFLAGS for musl
+ENV LDFLAGS="-lintl"
+ENV LIBS="-lintl"
+ENV ac_cv_lib_intl_textdomain=no
+ENV ac_cv_header_libintl_h=no
+
+# Build Python from source
+ARG PYTHON_VERSION="3.13.7"
+RUN curl -fsSLO https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz \
+&& tar -xf Python-${PYTHON_VERSION}.tgz \
+&& cd Python-${PYTHON_VERSION} \
+&& ./configure \
+        --disable-shared \
+        --with-ensurepip=install \
+        --with-openssl=/usr \
+        --with-openssl-rpath=auto \
+&& make -j"$(nproc)" \
+&& make install
+
+# Copy project files
+COPY setup.py main.py pyproject.toml /src/
+COPY src ./src
+
+# Install python modules
+RUN python3 -m pip install --upgrade pip wheel setuptools \
+    && python3 -m pip install nuitka \
+    && python3 -m pip install .
+
+# Compile with Nuitka
+RUN python3 -m nuitka \
+    --onefile \
+    --static-libpython=yes \
+    --follow-imports \
+    --lto=yes \
+    --output-filename=wheremytunnels.bin \
+    main.py
+
+CMD ["/src/wheremytunnels.bin", "--version"]
