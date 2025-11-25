@@ -5,13 +5,13 @@ WORKDIR /src
 
 # Install libraries
 RUN apk update \
-    && apk add \
-        gcc \
-        make \
-        git \
-        curl \
-        openssl-dev \
-        patchelf
+&& apk add \
+    gcc \
+    make \
+    git \
+    curl \
+    openssl-dev \
+    patchelf
 
 # Set LDFLAGS for musl
 ENV LDFLAGS="-lintl"

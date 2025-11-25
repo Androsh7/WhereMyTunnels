@@ -30,6 +30,6 @@
     {
         "architecture": "x86_64",
         "operating_system": "windows",
-        "python_version": "3.13"
+        "python_version": "3.13.9"
     }
 ]
