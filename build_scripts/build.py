@@ -69,6 +69,8 @@ def run_command(command: str, capture_output: bool = True) -> subprocess.Complet
         text=True,
         capture_output=capture_output,
         cwd=PARENT_DIR,
+        encoding="utf-8",
+        errors="backslashreplace",
     )
     time_span_str = print_timespan(start_time)
     if result.returncode != 0:
