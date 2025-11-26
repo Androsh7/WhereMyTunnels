@@ -8,7 +8,6 @@ from ipaddress import IPv4Address, IPv6Address, ip_address
 # Third-party libraries
 import psutil
 from attrs import define, field, validators
-from loguru import logger
 
 # Project libraries
 from src.default import SSH_FLAGS, SSH_VALUE_ARGUMENTS

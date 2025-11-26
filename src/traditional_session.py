@@ -1,7 +1,7 @@
 """Defines the TraditionalSession class"""
 
 # Third-party libraries
-from attrs import define, field, validators
+from attrs import define
 
 # Project libraries
 from src.base_ssh import BaseSsh

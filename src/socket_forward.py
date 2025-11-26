@@ -1,11 +1,10 @@
 """Defines the SocketForward class"""
 
 # Third-party libraries
-from attrs import define, field, validators
+from attrs import define
 
 # Project libraries
 from src.base_ssh import BaseSsh
-from src.base_forward import Forward
 from src.ssh_process import SshProcess
 
 
