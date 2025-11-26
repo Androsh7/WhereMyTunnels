@@ -42,6 +42,9 @@ class Forward:
         ),
     )
     malformed_message: Optional[str] = field(default=None, validator=validators.optional(validators.instance_of(str)))
+    malformed_message_color: Optional[str] = field(
+        default="bold red", validator=validators.optional(validators.instance_of(str))
+    )
     attached_connections: list[psutil._common.pconn] = field(
         factory=list,
         validator=validators.deep_iterable(
@@ -55,7 +58,7 @@ class Forward:
 
         # Print starting color
         if self.malformed_message:
-            out_string += "[bold red]"
+            out_string += f"[{self.malformed_message_color}]"
         else:
             out_string += "[green]"
 
@@ -86,11 +89,14 @@ class Forward:
                 out_string += f"{self.destination_host}:{self.destination_port} <- "
 
             out_string += f"{self.ssh_connection_destination}:{self.source_port}"
+        elif self.forward_type == "dynamic":
+            out_string += "DYNAMIC FORWARD: "
+            out_string += f"127.0.0.1:{self.source_port} -> {self.destination_host}:*"
 
         # print ending color
         if self.malformed_message:
             out_string += f" - {self.malformed_message}"
-            out_string += "[/bold red]"
+            out_string += f"[/{self.malformed_message_color}]"
         else:
             out_string += "[/green]"
 
@@ -104,6 +110,16 @@ class Forward:
         ssh_connection_destination: Union[IPv4Address, IPv6Address, str],
     ):
         split_arguments = Forward.split_forward_arguments(argument)
+
+        if forward_type == "dynamic":
+            return cls(
+                forward_type=forward_type,
+                ssh_connection_destination=ssh_connection_destination,
+                source_port=int(split_arguments[0]),
+                destination_host=ssh_connection_destination,
+                destination_port=1,
+                gateway_ip=None,
+            )
 
         try:
             destination_host = ip_address(split_arguments[-2])
@@ -127,15 +143,26 @@ class Forward:
         )
 
     @staticmethod
-    def split_forward_arguments(argument: str):
+    def split_forward_arguments(argument: str) -> list[str]:
+        """Splits the 4 elements of a forward into a list
+        [forward/reverse, source port, destination host, destination port]
+
+        Args:
+            argument: the argument string to split
+
+        Returns:
+            list of split arguments
+        """
         split_arguments = []
         reading_ipv6 = False
         out_string = ""
         for char in argument:
             if char == "[":
                 reading_ipv6 = True
+                out_string += char
             elif char == "]":
                 reading_ipv6 = False
+                out_string += char
             elif char == ":" and not reading_ipv6:
                 split_arguments.append(out_string)
                 out_string = ""

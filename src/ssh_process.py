@@ -82,7 +82,6 @@ class SshArguments:
                         char_index += 1
                         continue
 
-                    # logger.error(f"Unknown argument {char}, treating as flag")
                     flags.append(char)
                     char_index += 1
                     continue
@@ -98,7 +97,6 @@ class SshArguments:
                     destination_host = ip_address(host_str)
                 except ValueError:
                     destination_host = host_str
-                # logger.debug(f'Found host="{destination_host}"')
             else:
                 raise ValueError(f"Unexpected argument: {host_str}")
 

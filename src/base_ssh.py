@@ -9,7 +9,7 @@ from attrs import define, field, validators
 from src.ssh_process import SshProcess
 
 # Project libraries
-from src.default import SSH_TYPES
+from src.default import FORWARD_ARGUMENT_TO_STRING, SSH_TYPES
 from src.base_forward import Forward
 
 
@@ -50,33 +50,46 @@ class BaseSsh:
         for argument, value in process.arguments.value_arguments:
 
             # Create forward object
-            if argument not in ("L", "R"):
+            if argument not in ("L", "R", "D"):
                 continue
             forward = Forward.from_argument(
-                forward_type=f'{"local" if argument == "L" else "reverse"}',
+                forward_type=FORWARD_ARGUMENT_TO_STRING[argument],
                 argument=value,
                 ssh_connection_destination=process.arguments.destination_host,
             )
 
             # Attach connections
             for index, connection in enumerate(process.connections):
-                if forward.forward_type == "local":
-                    if (connection.status == "LISTEN" and connection.laddr.port == forward.source_port) or (
-                        connection.status == "ESTABLISHED" and connection.laddr.port == forward.source_port
-                    ):
-                        forward.attached_connections.append(connection)
-                        process.connections[index] = None
-                elif (
-                    forward.forward_type == "reverse"
-                    and connection.status == "LISTEN"
-                    and connection.raddr.port == forward.source_port
+                if connection is None:
+                    continue
+                if (
+                    (
+                        forward.forward_type in ("local", "dynamic")
+                        and connection.status == "LISTEN"
+                        and type(connection.laddr) != tuple
+                        and connection.laddr.port == forward.source_port
+                    )
+                    or (connection.status == "ESTABLISHED" and connection.laddr.port == forward.source_port)
+                    or (
+                        forward.forward_type == "reverse"
+                        and connection.status == "LISTEN"
+                        and type(connection.raddr) != tuple
+                        and connection.raddr.port == forward.source_port
+                    )
                 ):
                     forward.attached_connections.append(connection)
                     process.connections[index] = None
 
             # Mark forwards with missing connections as malformed
             if len(forward.attached_connections) == 0:
-                forward.malformed_message = "NO ATTACHED CONNECTION"
+                if forward.forward_type in ("local", "dynamic"):
+                    forward.malformed_message = "NO ATTACHED CONNECTION"
+                elif forward.forward_type == "reverse":
+                    forward.malformed_message = "REVERSE FORWARD NOT CURRENTLY IN USE"
+                    forward.malformed_message_color = "dark_orange"
+                else:
+                    raise ValueError("Invalid forward type")
+
             out_list.append(forward)
 
         return out_list

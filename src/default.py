@@ -1,7 +1,7 @@
 """Defines default values and constants"""
 
 VERSION = "1.0.0"
-FORWARD_TYPES = ("local", "reverse")
+FORWARD_TYPES = ("local", "reverse", "dynamic")
 SSH_TYPES = ("master_socket", "socket_forward", "traditional_tunnel", "traditional_session")
 SSH_FLAGS = ("n", "N", "f", "4", "6", "v", "vv", "vvv", "A", "a", "C", "q", "X", "x", "y", "g", "k", "M")
 SSH_VALUE_ARGUMENTS = (
@@ -29,3 +29,8 @@ SSH_VALUE_ARGUMENTS = (
     "L",
     "D",
 )
+FORWARD_ARGUMENT_TO_STRING = {
+    "L": "local",
+    "R": "reverse",
+    "D": "dynamic",
+}
