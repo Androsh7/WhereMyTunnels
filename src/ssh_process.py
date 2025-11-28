@@ -1,138 +1,73 @@
-"""Defines the SshProcess, SshArguments, and ValueArgument classes"""
+"""Defines the SshProcess class"""
 
 # Standard libraries
 import psutil
-from typing import Union, Optional
-from ipaddress import IPv4Address, IPv6Address, ip_address
+from typing import Literal, Optional
 
 # Third-party libraries
-import psutil
 from attrs import define, field, validators
 
 # Project libraries
-from src.default import SSH_FLAGS, SSH_VALUE_ARGUMENTS
+from src.forward import Forward, build_forward_list
+from src.default import SSH_TYPES
+from src.ssh_arguments import SshArguments
 
 
-@define
-class SshArguments:
-    """Class for organizing the ssh command list"""
+def get_socket_file(arguments: SshArguments) -> Optional[str]:
+    """Parses ssh arguments for a socket file
 
-    executable_name: str = field(validator=validators.instance_of(str))
-    username: Optional[str] = field(validator=validators.optional(validator=validators.instance_of(str)))
-    destination_host: Union[IPv4Address, IPv6Address, str] = field(
-        validator=validators.or_(
-            validators.instance_of(IPv4Address), validators.instance_of(IPv6Address), validators.instance_of(str)
-        )
-    )
-    destination_port: int = field(
-        validator=validators.and_(validators.instance_of(int), validators.ge(1), validators.le(65535))
-    )
-    flags: list[str] = field(
-        validator=validators.deep_iterable(
-            member_validator=validators.instance_of(str), iterable_validator=validators.instance_of(list)
-        )
-    )
-    value_arguments: list[tuple[str, str]] = field(
-        validator=validators.deep_iterable(
-            member_validator=validators.deep_iterable(
-                member_validator=validators.instance_of(str), iterable_validator=validators.instance_of(tuple)
-            ),
-            iterable_validator=validators.instance_of(list),
-        )
-    )
+    Args:
+        arguments: The ssh arguments
 
-    @classmethod
-    def from_command_list(cls, cmd_list: list[str]):
-        executable_name = cmd_list[0]
-        username = None
-        destination_host = None
-        destination_port = 22
-        flags = []
-        value_args = []
-
-        argument_index = 1
-        while argument_index < len(cmd_list):
-
-            # Search for arguments
-            if cmd_list[argument_index].startswith("-"):
-
-                # Search the arguments character-by-character
-                char_index = 1
-                while char_index < len(cmd_list[argument_index]):
-
-                    # Search for arguments that require a value
-                    char = cmd_list[argument_index][char_index]
-                    if char in SSH_VALUE_ARGUMENTS:
-
-                        # Grabs the argument type ("L", "R", "D", etc)
-                        arg_type = char
-
-                        # Normalize arguments so "-D9050" and ["-D", "9050"] both appear as ("D", "9050")
-                        if len(arg_value := cmd_list[argument_index][char_index + 1 :]) == 0:
-                            arg_value = cmd_list[argument_index + 1]
-                            argument_index += 1
-
-                        # Add the arg_value and arg_type to the value_args list
-                        value_args.append((arg_type, arg_value))
-                        break
-
-                    elif char in SSH_FLAGS:
-                        flags.append(char)
-                        char_index += 1
-                        continue
-
-                    flags.append(char)
-                    char_index += 1
-                    continue
-
-            # Grab the destination host
-            elif destination_host is None:
-                if "@" in cmd_list[argument_index]:
-                    username = cmd_list[argument_index].split("@")[0]
-                    host_str = cmd_list[argument_index].split("@")[1]
-                else:
-                    host_str = cmd_list[argument_index]
-                try:
-                    destination_host = ip_address(host_str)
-                except ValueError:
-                    destination_host = host_str
-            else:
-                raise ValueError(f"Unexpected argument: {host_str}")
-
-            argument_index += 1
-
-        # Find the destination port
-        for argument, value in value_args:
-            if argument == "p":
-                destination_port = int(value)
-
-        return cls(
-            username=username,
-            executable_name=executable_name,
-            destination_host=destination_host,
-            destination_port=destination_port,
-            flags=flags,
-            value_arguments=value_args,
-        )
+    Returns:
+        Returns the socket file or None if no socket file exists in the arguments
+    """
+    for argument, value in arguments.value_arguments:
+        if argument != "S":
+            continue
+        return value
+    return None
 
 
 @define
 class SshProcess:
     """Stores the SSH process information"""
 
+    ssh_type: Literal[SSH_TYPES] = field(
+        validator=validators.and_(validators.instance_of(str), validators.in_(SSH_TYPES))
+    )
     username: str = field(validator=validators.instance_of(str))
+    arguments: SshArguments = field(validator=validators.instance_of(SshArguments))
+    pid: int = field(validator=validators.and_(validators.instance_of(int), validators.ge(1)))
     connections: list[psutil._common.pconn] = field(
         validator=validators.deep_iterable(
             member_validator=validators.instance_of(psutil._common.pconn),
             iterable_validator=validators.instance_of(list),
         )
     )
-    pid: int = field(validator=validators.and_(validators.instance_of(int), validators.ge(1)))
-    arguments: SshArguments = field(validator=validators.instance_of(SshArguments))
-    raw_arguments: str = field(validator=validators.instance_of(str))
+    socket_file: Optional[str] = field(validator=validators.optional(validator=validators.instance_of(str)))
+    forwards: list[Forward] = field(
+        factory=list,
+        validator=validators.optional(
+            validators.deep_iterable(
+                member_validator=validators.instance_of(Forward), iterable_validator=validators.instance_of(list)
+            )
+        ),
+    )
+    children: list = field(factory=list, validator=validators.instance_of(list))
+    malformed_message: Optional[str] = field(default=None, validator=validators.optional(validators.instance_of(str)))
+    malformed_message_color: Optional[str] = field(
+        default="bold red", validator=validators.optional(validators.instance_of(str))
+    )
 
     @classmethod
     def from_process(cls, process: psutil.Process):
+        """Creates an SshProcess object from a psutil process
+
+        Args:
+            process: The psutil process
+        """
+        # Parse raw process arguments
         pid = process.info["pid"]
         connections = process.net_connections()
         arguments = SshArguments.from_command_list(process.info["cmdline"])
@@ -141,10 +76,37 @@ class SshProcess:
         else:
             username = arguments.username
 
+        # Build forward list
+        forwards = build_forward_list(arguments=arguments, connections=connections)
+
+        # Get socket file
+        socket_file = get_socket_file(arguments)
+
+        # Determine process type
+        if "M" in arguments.flags:
+            ssh_type = "master_socket"
+        elif socket_file:
+            if len(forwards) > 0:
+                ssh_type = "socket_forward"
+            else:
+                ssh_type = "socket_session"
+        elif len(forwards) > 0:
+            ssh_type = "traditional_tunnel"
+        else:
+            ssh_type = "traditional_session"
+
+        # Remove Nonetype connections
+        trimmed_connection_list = []
+        for connection in connections:
+            if connection:
+                trimmed_connection_list.append(connection)
+
         return cls(
+            ssh_type=ssh_type,
             username=username,
             arguments=arguments,
             pid=pid,
-            connections=connections,
-            raw_arguments=" ".join(process.info["cmdline"]),
+            connections=trimmed_connection_list,
+            socket_file=socket_file,
+            forwards=forwards,
         )

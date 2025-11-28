@@ -4,7 +4,7 @@
 import pytest
 
 # Project libraries
-from src.ssh_process import SshArguments
+from src.ssh_arguments import SshArguments
 
 
 CASES = [

@@ -3,23 +3,21 @@
 # Standard libraries
 import argparse
 import re
+from ipaddress import ip_address
 
 # Third-party libraries
 import psutil
 import time
 from rich.console import Console, Group
+from rich.text import Text
 from rich.tree import Tree
 from rich.live import Live
 
 # Project libraries
-from src.base_ssh import BaseSsh
-from src.base_forward import Forward
-from src.master_socket import MasterSocket
-from src.socket_forward import SocketForward
-from src.traditional_tunnel import TraditionalTunnel
-from src.traditional_session import TraditionalSession
+from src.forward import Forward
 from src.ssh_process import SshProcess
 from src.default import VERSION
+from src.render import return_with_color, render_ssh_process, render_connection
 
 console = Console()
 
@@ -27,50 +25,26 @@ SSH_NAME_RE = re.compile(r"(?:^|/)(ssh)(?:\.exe)?$", re.IGNORECASE)
 
 # Default Flags
 SHOW_CONNECTIONS = False
-SHOW_ARGUMENTS = True
+SHOW_ARGUMENTS = False
 
-# Color Constants
+# Colors
 TITLE_COLOR = "#39ff14"
-TITLE_COLOR_BOLD = f"bold {TITLE_COLOR}"
 LINK_COLOR = "underline blue"
 
-
-def return_with_color(text: str, color: str) -> str:
-    """Returns text wrapped in color tags
-
-    Args:
-        text: The text to wrap
-        color: The color to use
-
-    Returns:
-        The text wrapped in color tags
-    """
-    return f"[{color}]{text}[/{color}]"
+# Other constants
+DEFAULT_INTERVAL = 2
 
 
-def get_ssh_raw_processes() -> list[psutil.Process]:
+def get_ssh_processes() -> list[SshProcess]:
     """Gets a list of all raw SSH processes"""
+    out_list = []
     for process in psutil.process_iter(["pid", "username", "name", "cmdline"]):
         try:
             name = (process.info.get("name") or "").strip()
             if SSH_NAME_RE.search(name):
-                yield SshProcess.from_process(process)
+                out_list.append(SshProcess.from_process(process))
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
-
-
-def get_ssh_processes() -> list[BaseSsh]:
-    """Gets a list of all SSH processes"""
-    out_list = []
-    for process in get_ssh_raw_processes():
-        if MasterSocket.is_process_this(process):
-            out_list.append(MasterSocket.from_process(process))
-        elif SocketForward.is_process_this(process):
-            out_list.append(SocketForward.from_process(process))
-        elif TraditionalTunnel.is_process_this(process):
-            out_list.append(TraditionalTunnel.from_process(process))
-        else:
-            out_list.append(TraditionalSession.from_process(process))
     return out_list
 
 
@@ -85,22 +59,7 @@ def build_connection_branches(parent_branch: Tree, connection_list: list[psutil.
     for connection in connection_list:
         if connection is None:
             continue
-        elif connection.status == "LISTEN":
-            out_list.append(
-                return_with_color(text=f"LISTEN {connection.laddr.ip}:{connection.laddr.port}", color="blue")
-            )
-        elif connection.status == "ESTABLISHED":
-            out_list.append(
-                return_with_color(
-                    text=(
-                        f"ESTABLISHED {connection.laddr.ip}:{connection.laddr.port} -> "
-                        f"{connection.raddr.ip}:{connection.raddr.port}"
-                    ),
-                    color="blue",
-                )
-            )
-        else:
-            out_list.append(str(connection))
+        out_list.append(render_connection(connection))
     out_list.sort()
     for connection_str in out_list:
         parent_branch.add(connection_str)
@@ -117,118 +76,185 @@ def build_forward_branches(parent_branch: Tree, forward_list: list[Forward]):
         sub_branch = parent_branch.add(str(forward))
         if SHOW_CONNECTIONS:
             build_connection_branches(parent_branch=sub_branch, connection_list=forward.attached_connections)
+        for child_process in forward.children:
+            build_process_branch(child_process, parent_tree=sub_branch)
 
 
-def build_process_branch(parent_tree: Tree, ssh_process: BaseSsh) -> Tree:
+def build_process_branch(ssh_process: SshProcess, parent_tree: Tree) -> Tree:
     """Creates a branch for a specific ssh process
 
     Args:
-        parent_tree: The parent tree to add the branch to
+        parent_tree: The parent tree to add the branch to (or None if a tree needs to be created)
         ssh_process: The ssh process to create the branch for
 
     Returns:
         returns the created branch
     """
-    branch_title = str(ssh_process)
+    branch_title = render_ssh_process(ssh_process)
     if SHOW_ARGUMENTS:
-        branch_title += return_with_color(text=f" {ssh_process.ssh_process.raw_arguments}", color="white")
-    branch = parent_tree.add(branch_title)
+        branch_title += return_with_color(text=f" {" ".join(ssh_process.arguments.raw_arguments)}", color="white")
+    if parent_tree is not None:
+        branch = parent_tree.add(branch_title)
+    else:
+        branch = Tree(branch_title)
     if SHOW_CONNECTIONS:
-        build_connection_branches(parent_branch=branch, connection_list=ssh_process.ssh_process.connections)
+        build_connection_branches(parent_branch=branch, connection_list=ssh_process.connections)
     build_forward_branches(parent_branch=branch, forward_list=ssh_process.forwards)
     return branch
 
 
-def master_socket_ssh_tree(ssh_process_list: list[BaseSsh]) -> Tree:
-    """Creates a tree of master sockets and socket forwards
+def find_duplicate_forwards(forward_list: list[Forward]):
+    """Detects duplicate forwards and marks them as malformed
 
     Args:
-        ssh_process_list: List of SSH processes
-
-    Returns:
-        Tree of master sockets and socket forwards
+        forward_list: List of all forwards
     """
-    tree = Tree("")
-
-    for ssh_process in ssh_process_list:
-        if ssh_process.ssh_type != "master_socket":
-            continue
-        # Create a branch for the master socket
-        branch = build_process_branch(tree, ssh_process=ssh_process)
-
-        # Create a sub-branch for any attached stream socket
-        for ssh_sub_process in ssh_process_list:
-            if ssh_sub_process.ssh_type != "socket_forward" or ssh_process.socket_file != ssh_sub_process.socket_file:
+    for forward in forward_list:
+        error_message = ""
+        for forward_check in forward_list:
+            if forward == forward_check:
                 continue
-            build_process_branch(parent_tree=branch, ssh_process=ssh_sub_process)
+            if (
+                forward.forward_type == forward_check.forward_type
+                and forward.forward_type in ("local", "dynamic")
+                and forward.source_port == forward_check.source_port
+            ):
+                error_message += "DUPLICATE FORWARD DETECTED"
+            elif (
+                forward.forward_type == forward_check.forward_type
+                and forward.forward_type == "reverse"
+                and forward.source_port == forward_check.source_port
+                and forward.ssh_connection_destination == forward_check.ssh_connection_destination
+            ):
+                error_message += "DUPLICATE FORWARD DETECTED"
+            else:
+                continue
+            break
 
-    tree.label = return_with_color(text=f"Master Sockets ({len(tree.children)})", color="bold cyan")
-    return tree
+        # Add the error message to the malformed message
+        if len(error_message) > 1:
+            if forward.malformed_message is None:
+                forward.malformed_message = error_message
+            elif forward.malformed_message.find(error_message) == -1:
+                forward.malformed_message += f" - {error_message}"
+                forward.malformed_message_color
 
 
-def traditional_tunnel_ssh_tree(ssh_process_list: list[BaseSsh]) -> Tree:
-    """Creates a tree of traditional tunnels
+def assign_socket_children(ssh_process_list: list[SshProcess]):
+    """Assigns socket forwards and socket sessions as children to the owning master socket
+        or marks them as malformed if no master socket process exists
 
     Args:
-        ssh_process_list: List of SSH processes
-
-    Returns:
-        Tree of traditional tunnels
+        ssh_process_list: List of SshProcess object
     """
-
-    tree = Tree("")
-    for ssh_process in ssh_process_list:
-        if ssh_process.ssh_type != "traditional_tunnel":
+    for socket_ssh_process_index, socket_ssh_process in enumerate(ssh_process_list):
+        if socket_ssh_process is None or socket_ssh_process.ssh_type not in ("socket_session", "socket_forward"):
             continue
-        build_process_branch(parent_tree=tree, ssh_process=ssh_process)
-    tree.label = return_with_color(text=f"Traditional Tunnels ({len(tree.children)})", color="magenta")
-    return tree
+        for master_socket_ssh_process in ssh_process_list:
+            if master_socket_ssh_process is None or master_socket_ssh_process.ssh_type != "master_socket":
+                continue
+
+            # Add the socket process as a child to the master socket
+            if socket_ssh_process.socket_file == master_socket_ssh_process.socket_file:
+                master_socket_ssh_process.children.append(socket_ssh_process)
+                ssh_process_list[socket_ssh_process_index] = None
+                break
+
+        # Add an error if no parent was found
+        if ssh_process_list[socket_ssh_process_index] is not None:
+            socket_ssh_process.malformed_message = f'Orphan {socket_ssh_process.ssh_type.replace("_", " ")}'
 
 
-def traditional_session_ssh_tree(ssh_process_list: list[BaseSsh]) -> Tree:
-    """Creates a tree of traditional sessions
+def assign_forward_children(ssh_process_list: list[SshProcess], forward_list: list[Forward], max_depth: int = 3):
+    """Assigns processes as children of ssh forwards
 
     Args:
-        ssh_process_list: List of SSH processes
-
-    Returns:
-        Tree of traditional sessions
+        ssh_process_list: List of SshProcess object
+        forward_list: List of Forward objects from the ssh_process_list
+        max_depth: The max number of times the parsing will re-run to find more dependencies
     """
-    tree = Tree("")
-    for ssh_process in ssh_process_list:
-        if ssh_process.ssh_type != "traditional_session":
-            continue
-        build_process_branch(parent_tree=tree, ssh_process=ssh_process)
-    tree.label = return_with_color(text=f"Traditional Sessions ({len(tree.children)})", color="bold yellow")
-    return tree
+    for _ in range(max_depth):
+        children_found = 0
+        for ssh_process_index, ssh_process in enumerate(ssh_process_list):
+            # Ignore socket sessions and socket forwards
+            # and any process whose destination port is not "127.0.0.1"
+            if (
+                ssh_process is None
+                or ssh_process.ssh_type in ("socket_session", "socket_forward")
+                or ssh_process.arguments.destination_host != ip_address("127.0.0.1")
+            ):
+                continue
+
+            for forward in forward_list:
+                # Ignore any forward that isn't a local forward
+                if forward.forward_type != "local":
+                    continue
+
+                if forward.source_port == ssh_process.arguments.destination_port:
+                    forward.children.append(ssh_process)
+                    ssh_process_list[ssh_process_index] = None
+                    children_found += 1
+                    break
+
+        # Exit early if no children are found
+        if children_found == 0:
+            break
 
 
-def create_trees() -> Group:
-    """Returns a group of all trees"""
+def create_ssh_tree_group() -> Group:
+    """Returns a group of all ssh process trees"""
+
+    # Get all ssh processes
     ssh_process_list = get_ssh_processes()
-    return Group(
-        master_socket_ssh_tree(ssh_process_list),
-        traditional_tunnel_ssh_tree(ssh_process_list),
-        traditional_session_ssh_tree(ssh_process_list),
-    )
+
+    # Get a list of all forwards
+    forward_list = []
+    for ssh_process in ssh_process_list:
+        for forward in ssh_process.forwards:
+            forward_list.append(forward)
+
+    # Find duplicate forwards
+    find_duplicate_forwards(forward_list)
+
+    # Find socket dependencies
+    assign_socket_children(ssh_process_list)
+
+    # Find dependencies by forward
+    assign_forward_children(ssh_process_list, forward_list, max_depth=3)
+
+    # Create the trees
+    tree_list = []
+    for ssh_process in ssh_process_list:
+        if ssh_process is None:
+            continue
+        tree_list.append(build_process_branch(parent_tree=None, ssh_process=ssh_process))
+    if len(tree_list) == 0:
+        tree_list.append(Text(text="No ssh connections detected", style="white"))
+    return Group(*tree_list)
 
 
 def render_tree(interval: float = 2.0):
     """Continuously refresh the tree output every `interval` seconds."""
-    with Live(create_trees(), refresh_per_second=interval, console=console) as live:
+    with Live(create_ssh_tree_group(), refresh_per_second=interval, console=console) as live:
         while True:
-            new_group = create_trees()
+            new_group = create_ssh_tree_group()
             live.update(new_group)
             time.sleep(interval)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        prog="WhereMyTunnels", description="Tool for viewing current SSH connections", usage="wheremytunnels [options]"
+        prog="WhereMyTunnels", description="Tool for viewing SSH connections", usage="wheremytunnels [options]"
     )
     parser.add_argument("--version", "-v", action="version", version=f"WhereMyTunnels v{VERSION}")
     parser.add_argument("--about", "-a", action="store_true", help="Show information about WhereMyTunnels")
-    parser.add_argument("--interval", "-i", type=int, default=2, help="Refresh interval in seconds (default: 2)")
+    parser.add_argument(
+        "--interval",
+        "-i",
+        type=int,
+        default=DEFAULT_INTERVAL,
+        help=f"Refresh interval in seconds (default: {DEFAULT_INTERVAL})",
+    )
     parser.add_argument("--no-color", action="store_true", help="Disable colored output")
     parser.add_argument(
         "--show-connections",
@@ -236,7 +262,7 @@ if __name__ == "__main__":
         help='Displays attached connections I.E: "LISTEN 127.0.0.1:8081", "ESTABLISHED 15.1.2.5:12385 -> 8.5.1.4:80"',
     )
     parser.add_argument(
-        "--hide-arguments", action="store_true", help='Hide SSH arguments I.E: "ssh test.com -L 8080:localhost:80"'
+        "--show-arguments", action="store_true", help='Shows SSH arguments I.E: "ssh test.com -L 8080:localhost:80"'
     )
     args = parser.parse_args()
 
@@ -247,7 +273,7 @@ if __name__ == "__main__":
     # Show about information
     if args.about:
         console.print(
-            return_with_color(text="WhereMyTunnels ", color=TITLE_COLOR_BOLD)
+            return_with_color(text="WhereMyTunnels ", color=TITLE_COLOR, bold=True)
             + return_with_color(text=f"v{VERSION}\n", color=TITLE_COLOR)
             + "A tool for viewing current SSH tunnels and connections.\n"
             "Created by Androsh7\n"
@@ -259,12 +285,12 @@ if __name__ == "__main__":
     # Set global flags
     if args.show_connections:
         SHOW_CONNECTIONS = True
-    if args.hide_arguments:
-        SHOW_ARGUMENTS = False
+    if args.show_arguments:
+        SHOW_ARGUMENTS = True
 
     try:
         console.rule(
-            f"{return_with_color(text="WhereMyTunnels", color=TITLE_COLOR_BOLD)} {return_with_color(text=f"v{VERSION}", color=TITLE_COLOR)}",
+            f"{return_with_color(text="WhereMyTunnels", color=TITLE_COLOR, bold=True)} {return_with_color(text=f"v{VERSION}", color=TITLE_COLOR)}",
             style=TITLE_COLOR,
             characters="=",
         )

@@ -9,7 +9,8 @@ from typing import Literal, Union, Optional
 from attrs import define, field, validators
 
 # Project libraries
-from src.default import FORWARD_TYPES
+from src.default import FORWARD_TYPES, FORWARD_ARGUMENT_TO_STRING
+from src.ssh_arguments import SshArguments
 
 
 @define
@@ -52,6 +53,7 @@ class Forward:
             iterable_validator=validators.instance_of(list),
         ),
     )
+    children: list = field(factory=list, validator=validators.instance_of(list))
 
     def __str__(self):
         out_string = ""
@@ -91,7 +93,7 @@ class Forward:
             out_string += f"{self.ssh_connection_destination}:{self.source_port}"
         elif self.forward_type == "dynamic":
             out_string += "DYNAMIC FORWARD: "
-            out_string += f"127.0.0.1:{self.source_port} -> {self.destination_host}:*"
+            out_string += f"127.0.0.1:{self.source_port} -> {self.destination_host} -> *:*"
 
         # print ending color
         if self.malformed_message:
@@ -170,3 +172,55 @@ class Forward:
                 out_string += char
         split_arguments.append(out_string)
         return split_arguments
+
+
+def build_forward_list(arguments: SshArguments, connections: list[psutil._common.pconn]) -> list[Forward]:
+    out_list = []
+    for argument, value in arguments.value_arguments:
+
+        # Create forward object
+        if argument not in ("L", "R", "D"):
+            continue
+        forward = Forward.from_argument(
+            forward_type=FORWARD_ARGUMENT_TO_STRING[argument],
+            argument=value,
+            ssh_connection_destination=arguments.destination_host,
+        )
+
+        # Attach connections
+        for index, connection in enumerate(connections):
+            if connection is None:
+                continue
+            if (
+                (
+                    forward.forward_type in ("local", "dynamic")
+                    and connection.status == "LISTEN"
+                    and type(connection.laddr) != tuple
+                    and connection.laddr.port == forward.source_port
+                )
+                or (connection.status == "ESTABLISHED" and connection.laddr.port == forward.source_port)
+                or (
+                    forward.forward_type == "reverse"
+                    and connection.status == "LISTEN"
+                    and type(connection.raddr) != tuple
+                    and connection.raddr.port == forward.source_port
+                )
+            ):
+                forward.attached_connections.append(connection)
+                connections[index] = None
+
+        # Mark forwards with missing connections as malformed
+        if len(forward.attached_connections) == 0:
+            if forward.forward_type in ("local", "dynamic"):
+                forward.malformed_message = "NO ATTACHED LISTENING CONNECTION"
+            elif forward.forward_type == "reverse":
+                forward.malformed_message = "REVERSE FORWARD NOT CURRENTLY IN USE"
+                forward.malformed_message_color = "dark_orange"
+            else:
+                raise ValueError("Invalid forward type")
+
+        out_list.append(forward)
+
+    if len(out_list) is None:
+        return None
+    return out_list
