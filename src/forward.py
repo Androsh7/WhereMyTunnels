@@ -1,11 +1,11 @@
 """Defines the Forward class"""
 
 # Standard libraries
-import psutil
 from ipaddress import ip_address, IPv4Address, IPv6Address
 from typing import Literal, Union, Optional
 
 # Third-party libraries
+import psutil
 from attrs import define, field, validators
 
 # Project libraries

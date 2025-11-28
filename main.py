@@ -277,7 +277,7 @@ if __name__ == "__main__":
         console.print(
             return_with_color(text="WhereMyTunnels ", color=TITLE_COLOR, bold=True)
             + return_with_color(text=f"v{VERSION}\n", color=TITLE_COLOR)
-            + "A tool for viewing current SSH tunnels and connections.\n"
+            + "A tool for viewing SSH tunnels and connections.\n"
             "Created by Androsh7\n"
             f"GitHub:  {return_with_color(text="https://github.com/androsh7/WhereMyTunnels", color=LINK_COLOR)}\n"
             f"Website: {return_with_color(text="https://androsh7.com", color=LINK_COLOR)}"

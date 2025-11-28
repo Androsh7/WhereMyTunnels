@@ -1,10 +1,10 @@
 """Defines the SshProcess class"""
 
 # Standard libraries
-import psutil
 from typing import Literal, Optional
 
 # Third-party libraries
+import psutil
 from attrs import define, field, validators
 
 # Project libraries
