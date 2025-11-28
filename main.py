@@ -3,21 +3,23 @@
 # Standard libraries
 import argparse
 import re
+import sys
+import time
 from ipaddress import ip_address
 
 # Third-party libraries
 import psutil
-import time
 from rich.console import Console, Group
+from rich.live import Live
 from rich.text import Text
 from rich.tree import Tree
-from rich.live import Live
+
 
 # Project libraries
-from src.forward import Forward
-from src.ssh_process import SshProcess
 from src.default import VERSION
-from src.render import return_with_color, render_ssh_process, render_connection
+from src.forward import Forward
+from src.render import render_connection, render_ssh_process, return_with_color
+from src.ssh_process import SshProcess
 
 console = Console()
 
@@ -139,7 +141,7 @@ def find_duplicate_forwards(forward_list: list[Forward]):
                 forward.malformed_message = error_message
             elif forward.malformed_message.find(error_message) == -1:
                 forward.malformed_message += f" - {error_message}"
-                forward.malformed_message_color
+                forward.malformed_message_color = "bold red"
 
 
 def assign_socket_children(ssh_process_list: list[SshProcess]):
@@ -282,7 +284,7 @@ if __name__ == "__main__":
             f"GitHub:  {return_with_color(text="https://github.com/androsh7/WhereMyTunnels", color=LINK_COLOR)}\n"
             f"Website: {return_with_color(text="https://androsh7.com", color=LINK_COLOR)}"
         )
-        exit(0)
+        sys.exit(0)
 
     # Set global flags
     if args.show_connections:
@@ -300,4 +302,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     except Exception as ex:
-        raise Exception(f"WhereMyTunnels crashed (╯°□°)╯︵ ┻━┻") from ex
+        raise Exception("WhereMyTunnels crashed (╯°□°)╯︵ ┻━┻") from ex

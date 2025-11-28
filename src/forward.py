@@ -1,20 +1,22 @@
 """Defines the Forward class"""
 
 # Standard libraries
-from ipaddress import ip_address, IPv4Address, IPv6Address
-from typing import Literal, Union, Optional
+from ipaddress import IPv4Address, IPv6Address, ip_address
+from typing import Literal, Optional, Union
 
 # Third-party libraries
 import psutil
 from attrs import define, field, validators
 
 # Project libraries
-from src.default import FORWARD_TYPES, FORWARD_ARGUMENT_TO_STRING
+from src.default import FORWARD_ARGUMENT_TO_STRING, FORWARD_TYPES
 from src.ssh_arguments import SshArguments
 
 
 @define
 class Forward:
+    """Class to define an ssh forward"""
+
     forward_type: Literal[FORWARD_TYPES] = field(
         validator=validators.and_(validators.instance_of(str), validators.in_(FORWARD_TYPES))
     )
@@ -86,7 +88,7 @@ class Forward:
 
             if self.destination_host != ip_address("127.0.0.1"):
                 out_string += f"{self.destination_host}:{self.destination_port} <- "
-                out_string += f"127.0.0.1 <- "
+                out_string += "127.0.0.1 <- "
             else:
                 out_string += f"{self.destination_host}:{self.destination_port} <- "
 
@@ -111,6 +113,13 @@ class Forward:
         argument: str,
         ssh_connection_destination: Union[IPv4Address, IPv6Address, str],
     ):
+        """Creates an ssh forward
+
+        Args:
+            forward_type: The forward type
+            argument: The forward argument string
+            ssh_connection_destination: The ssh connection's destination host
+        """
         split_arguments = Forward.split_forward_arguments(argument)
 
         if forward_type == "dynamic":
@@ -174,7 +183,9 @@ class Forward:
         return split_arguments
 
 
-def build_forward_list(arguments: SshArguments, connections: list[psutil._common.pconn], has_socket_file: bool = False) -> list[Forward]:
+def build_forward_list(
+    arguments: SshArguments, connections: list[psutil._common.pconn], has_socket_file: bool = False
+) -> list[Forward]:
     """Creates a list of forward objects
 
     Args:
@@ -209,14 +220,14 @@ def build_forward_list(arguments: SshArguments, connections: list[psutil._common
                 (
                     forward.forward_type in ("local", "dynamic")
                     and connection.status == "LISTEN"
-                    and type(connection.laddr) != tuple
+                    and isinstance(connection.laddr, tuple)
                     and connection.laddr.port == forward.source_port
                 )
                 or (connection.status == "ESTABLISHED" and connection.laddr.port == forward.source_port)
                 or (
                     forward.forward_type == "reverse"
                     and connection.status == "LISTEN"
-                    and type(connection.raddr) != tuple
+                    and isinstance(connection.raddr, tuple)
                     and connection.raddr.port == forward.source_port
                 )
             ):

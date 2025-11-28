@@ -1,8 +1,8 @@
 """Defines the SshArgument classes"""
 
 # Standard libraries
-from typing import Union, Optional
 from ipaddress import IPv4Address, IPv6Address, ip_address
+from typing import Optional, Union
 
 # Third-party libraries
 from attrs import define, field, validators
@@ -46,6 +46,14 @@ class SshArguments:
 
     @classmethod
     def from_command_list(cls, cmd_list: list[str]):
+        """Converts a list of commands into an SshArguments object
+
+        Args:
+            cmd_list: The list of ssh arguments
+
+        Raises:
+            ValueError: If an unexpected ssh argument is encountered
+        """
         executable_name = cmd_list[0]
         username = None
         destination_host = None
@@ -79,7 +87,7 @@ class SshArguments:
                         value_args.append((arg_type, arg_value))
                         break
 
-                    elif char in SSH_FLAGS:
+                    if char in SSH_FLAGS:
                         flags.append(char)
                         char_index += 1
                         continue

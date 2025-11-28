@@ -7,9 +7,10 @@ from typing import Literal, Optional
 import psutil
 from attrs import define, field, validators
 
+
 # Project libraries
-from src.forward import Forward, build_forward_list
 from src.default import SSH_TYPES
+from src.forward import Forward, build_forward_list
 from src.ssh_arguments import SshArguments
 
 
@@ -80,7 +81,9 @@ class SshProcess:
         socket_file = get_socket_file(arguments)
 
         # Build forward list
-        forwards = build_forward_list(arguments=arguments, connections=connections, has_socket_file=socket_file is not None)
+        forwards = build_forward_list(
+            arguments=arguments, connections=connections, has_socket_file=socket_file is not None
+        )
 
         # Determine process type
         if "M" in arguments.flags:

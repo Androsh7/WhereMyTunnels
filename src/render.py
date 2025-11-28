@@ -52,6 +52,14 @@ def return_with_color(text: str, color: str, bold: bool = False) -> str:
 
 
 def render_ssh_process(process: SshProcess) -> str:
+    """Turns an ssh process into a printable string
+
+    Args:
+        process: The ssh process
+
+    Returns:
+        The ssh process as a string
+    """
     out_string = f'{RENDER_DICT[process.ssh_type]["title"]}: '
     if process.socket_file:
         out_string += f"{process.socket_file} "
@@ -72,11 +80,19 @@ def render_ssh_process(process: SshProcess) -> str:
 
 
 def render_connection(connection: psutil._common.pconn) -> str:
+    """Turns a connection into a printable string
+
+    Args:
+        connection: The psutil connection
+
+    Returns:
+        The connection as a string
+    """
     if connection.status == "LISTEN":
         return return_with_color(
             text=f"LISTEN {connection.laddr.ip}:{connection.laddr.port}", color=RENDER_DICT[connection.status]["color"]
         )
-    elif connection.status == "ESTABLISHED":
+    if connection.status == "ESTABLISHED":
         return return_with_color(
             text=(
                 f"ESTABLISHED {connection.laddr.ip}:{connection.laddr.port} -> "

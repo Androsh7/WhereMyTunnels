@@ -6,7 +6,6 @@ import pytest
 # Project libraries
 from src.ssh_arguments import SshArguments
 
-
 CASES = [
     # 1) No flags/args
     (
