@@ -315,7 +315,8 @@ if __name__ == "__main__":
                 python_version=build_config["python_version"],
             )
         elif build_config["operating_system"] == "windows":
-            executable_name = create_windows_image(python_version=build_config["python_version"], python_executable_path=args.set_python_executable)
-        print(f"Created executable: {PARENT_DIR}/dist/{build_config['operating_system']}/{executable_name}")
+            executable_name = create_windows_image(
+                python_version=build_config["python_version"], python_executable_path=args.set_python_executable
+            )
     else:
         parser.print_help()
