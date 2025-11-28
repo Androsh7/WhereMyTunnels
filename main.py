@@ -99,6 +99,8 @@ def build_process_branch(ssh_process: SshProcess, parent_tree: Tree) -> Tree:
         branch = Tree(branch_title)
     if SHOW_CONNECTIONS:
         build_connection_branches(parent_branch=branch, connection_list=ssh_process.connections)
+    for child_process in ssh_process.children:
+        build_process_branch(ssh_process=child_process, parent_tree=branch)
     build_forward_branches(parent_branch=branch, forward_list=ssh_process.forwards)
     return branch
 
@@ -298,4 +300,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     except Exception as ex:
-        raise type(ex)(f"WhereMyTunnels crashed (╯°□°)╯︵ ┻━┻") from ex
+        raise Exception(f"WhereMyTunnels crashed (╯°□°)╯︵ ┻━┻") from ex
