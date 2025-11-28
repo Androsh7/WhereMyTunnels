@@ -174,7 +174,21 @@ class Forward:
         return split_arguments
 
 
-def build_forward_list(arguments: SshArguments, connections: list[psutil._common.pconn]) -> list[Forward]:
+def build_forward_list(arguments: SshArguments, connections: list[psutil._common.pconn], has_socket_file: bool = False) -> list[Forward]:
+    """Creates a list of forward objects
+
+    Args:
+        arguments: The ssh arguments
+        connections: Any attached connections
+        has_socket_file: Whether or not the the parent process has a socket file
+            this disables the "NO ATTACHED LISTENING CONNECTION" message
+
+    Raises:
+        ValueError: If an invalid forward type is provided
+
+    Returns:
+        List of forwards
+    """
     out_list = []
     for argument, value in arguments.value_arguments:
 
@@ -211,13 +225,11 @@ def build_forward_list(arguments: SshArguments, connections: list[psutil._common
 
         # Mark forwards with missing connections as malformed
         if len(forward.attached_connections) == 0:
-            if forward.forward_type in ("local", "dynamic"):
+            if forward.forward_type in ("local", "dynamic") and not has_socket_file:
                 forward.malformed_message = "NO ATTACHED LISTENING CONNECTION"
-            elif forward.forward_type == "reverse":
+            elif forward.forward_type == "reverse" and not has_socket_file:
                 forward.malformed_message = "REVERSE FORWARD NOT CURRENTLY IN USE"
                 forward.malformed_message_color = "dark_orange"
-            else:
-                raise ValueError("Invalid forward type")
 
         out_list.append(forward)
 

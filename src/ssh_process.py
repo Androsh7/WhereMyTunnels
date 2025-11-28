@@ -76,11 +76,11 @@ class SshProcess:
         else:
             username = arguments.username
 
-        # Build forward list
-        forwards = build_forward_list(arguments=arguments, connections=connections)
-
         # Get socket file
         socket_file = get_socket_file(arguments)
+
+        # Build forward list
+        forwards = build_forward_list(arguments=arguments, connections=connections, has_socket_file=socket_file is not None)
 
         # Determine process type
         if "M" in arguments.flags:
