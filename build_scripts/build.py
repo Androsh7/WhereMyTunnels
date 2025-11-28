@@ -108,7 +108,7 @@ def create_windows_image(python_version: str, python_executable_path: str) -> st
         f"&& pip install --upgrade pip setuptools wheel nuitka "
         f"&& pip install {PARENT_DIR}"
     )
-    nuitka_build_command = f"nuitka --onefile --follow-imports --output-filename={PARENT_DIR}/dist/windows/{executable_name} {PARENT_DIR}/main.py"
+    nuitka_build_command = f"{venv_dir}/Scripts/activate.ps1 && nuitka --onefile --follow-imports --output-filename={PARENT_DIR}/dist/windows/{executable_name} {PARENT_DIR}/main.py"
     test_executable_command = f"{PARENT_DIR}/dist/windows/{executable_name} --version"
 
     python_executable_version = run_command(get_python_version_command, capture_output=True).stdout.split()[-1].strip()
