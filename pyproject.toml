@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "WhereMyTunnels"
+version = "1.0.0"
+description = "Tool for viewing SSH connections"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+dependencies = [
+    "attrs",
+    "psutil",
+    "rich",
+]
+
+[project.urls]
+Repository = "https://github.com/Androsh7/wheremytunnels"
+Issues = "https://github.com/Androsh7/wheremytunnels/issues"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_configs = true
+
+[tool.black]
+line-length = 120
+target-version = ["py311", "py312", "py313"]
+
+[tool.isort]
+profile = "black"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "black",
+  "isort",
+]
