@@ -1,7 +1,6 @@
 """Defines the format for printing SshProcess objects"""
 
 # Third-party libraries
-import psutil
 
 # Project libraries
 from where_my_tunnels.ssh_process import SshProcess

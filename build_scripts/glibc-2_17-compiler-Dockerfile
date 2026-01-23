@@ -1,0 +1,83 @@
+ARG ARCHITECTURE="x86_64"
+FROM quay.io/pypa/manylinux2014_${ARCHITECTURE}:latest
+WORKDIR /src
+
+# Install libraries
+RUN yum update \
+&& yum -y install \
+    gcc \
+    make \
+    git \
+    curl \
+    openssl \
+    openssl-devel \
+    pkgconfig \
+    ca-certificates \
+    patchelf \
+    zlib-devel \
+    bzip2-devel \
+    xz-devel \
+    libffi-devel \
+&& update-ca-trust
+
+# Build openssl from source
+ARG OPENSSL_VERSION="1.1.1w"
+RUN curl -fsSLO https://www.openssl.org/source/openssl-${OPENSSL_VERSION}.tar.gz \
+ && tar -xzf openssl-${OPENSSL_VERSION}.tar.gz \
+ && cd openssl-${OPENSSL_VERSION} \
+ && ./config \
+      --prefix=/opt/openssl-1.1 \
+      --openssldir=/opt/openssl-1.1 \
+      shared zlib \
+ && make -j"$(nproc)" \
+ && make install_sw \
+ && cd /src \
+ && rm -rf openssl-${OPENSSL_VERSION}*
+
+# Set OpenSSL environment variables
+ENV OPENSSL_ROOT=/opt/openssl-1.1
+ENV PATH="${OPENSSL_ROOT}/bin:${PATH}"
+ENV LD_LIBRARY_PATH="${OPENSSL_ROOT}/lib:${LD_LIBRARY_PATH}"
+
+# Build Python from source
+ARG PYTHON_VERSION="3.13.11"
+RUN curl -fsSLO https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz \
+ && tar -xzf Python-${PYTHON_VERSION}.tgz \
+ && cd Python-${PYTHON_VERSION} \
+ && export CPPFLAGS="-I${OPENSSL_ROOT}/include" \
+ && export LDFLAGS="-L${OPENSSL_ROOT}/lib -Wl,-rpath,${OPENSSL_ROOT}/lib" \
+ && ./configure \
+      --prefix=/opt/python-${PYTHON_VERSION} \
+      --disable-shared \
+      --with-ensurepip=install \
+      --with-openssl=${OPENSSL_ROOT} \
+      --with-openssl-rpath=auto \
+ && make -j"$(nproc)" \
+ && make install \
+ && cd /src \
+ && rm -rf Python-${PYTHON_VERSION}*
+
+# Set Python environment variables
+ENV PYBIN=/opt/python-${PYTHON_VERSION}/bin
+
+# Check openssl and python installation
+RUN ${PYBIN}/python3 -c "import ssl; print('SSL OK:', ssl.OPENSSL_VERSION)" \
+ && ${PYBIN}/python3 --version
+
+# Copy project files
+COPY README.md pyproject.toml setup.py /src/
+COPY where_my_tunnels /src/where_my_tunnels
+
+# Install python modules
+RUN ${PYBIN}/python3 -m pip install .[dev]
+
+# Compile with Nuitka
+RUN ${PYBIN}/python3 -m nuitka \
+    --onefile \
+    --static-libpython=yes \
+    --follow-imports \
+    --lto=yes \
+    --output-filename=/src/wheremytunnels.bin \
+    /src/where_my_tunnels/main.py
+
+CMD ["/src/wheremytunnels.bin", "--version"]

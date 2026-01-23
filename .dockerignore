@@ -1,0 +1,14 @@
+# Python
+*.venv/
+__pycache__/
+.pytest_cache/
+build/
+*.egg-info/
+
+# Nuitka
+build/
+*.build/
+*.dist/
+*.onefile-build
+*.exe
+*.bin

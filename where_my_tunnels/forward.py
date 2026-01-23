@@ -5,7 +5,6 @@ from ipaddress import IPv4Address, IPv6Address, ip_address
 from typing import Literal
 
 # Third-party libraries
-import psutil
 from attrs import define, field, validators
 
 # Project libraries
