@@ -84,7 +84,7 @@ def build_linux_executable(
                 "--onefile",
                 "--static-libpython=yes",
                 "--follow-imports",
-                "--enable-plugin=tk-inter",
+                "--lto=yes",
                 "--output-file=/src/where_my_tunnels.bin",
                 "/src/where_my_tunnels/main.py",
             ],
