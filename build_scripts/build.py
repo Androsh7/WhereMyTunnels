@@ -123,6 +123,7 @@ def build_windows_executable(output_path: Path) -> Path:
             "nuitka",
             "--onefile",
             "--follow-imports",
+            "--assume-yes-for-downloads",
             f"--output-file={output_path}",
             str(PARENT_DIRECTORY / "where_my_tunnels" / "main.py"),
         ],
