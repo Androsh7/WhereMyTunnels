@@ -2,15 +2,15 @@
 
 # Standard libraries
 from ipaddress import IPv4Address, IPv6Address, ip_address
-from typing import Literal, Optional, Union
+from typing import Literal
 
 # Third-party libraries
 import psutil
 from attrs import define, field, validators
 
 # Project libraries
-from src.default import FORWARD_ARGUMENT_TO_STRING, FORWARD_TYPES
-from src.ssh_arguments import SshArguments
+from where_my_tunnels.default import FORWARD_ARGUMENT_TO_STRING, FORWARD_TYPES
+from where_my_tunnels.ssh_arguments import SshArguments
 
 
 @define
@@ -20,7 +20,7 @@ class Forward:
     forward_type: Literal[FORWARD_TYPES] = field(
         validator=validators.and_(validators.instance_of(str), validators.in_(FORWARD_TYPES))
     )
-    ssh_connection_destination: Union[IPv4Address, IPv6Address, str] = field(
+    ssh_connection_destination: IPv4Address | IPv6Address | str = field(
         validator=validators.or_(
             validators.instance_of(IPv4Address), validators.instance_of(IPv6Address), validators.instance_of(str)
         )
@@ -28,7 +28,7 @@ class Forward:
     source_port: int = field(
         validator=validators.and_(validators.instance_of(int), validators.ge(1), validators.le(65535))
     )
-    destination_host: Union[IPv4Address, IPv6Address, str] = field(
+    destination_host: IPv4Address | IPv6Address | str = field(
         validator=validators.or_(
             validators.instance_of(IPv4Address), validators.instance_of(IPv6Address), validators.instance_of(str)
         )
@@ -36,7 +36,7 @@ class Forward:
     destination_port: int = field(
         validator=validators.and_(validators.instance_of(int), validators.ge(1), validators.le(65535))
     )
-    gateway_ip: Optional[Union[IPv4Address, IPv6Address, str]] = field(
+    gateway_ip: IPv4Address | IPv6Address | str | None = field(
         default=None,
         validator=validators.optional(
             validators.or_(
@@ -44,8 +44,8 @@ class Forward:
             )
         ),
     )
-    malformed_message: Optional[str] = field(default=None, validator=validators.optional(validators.instance_of(str)))
-    malformed_message_color: Optional[str] = field(
+    malformed_message: str | None = field(default=None, validator=validators.optional(validators.instance_of(str)))
+    malformed_message_color: str | None = field(
         default="bold red", validator=validators.optional(validators.instance_of(str))
     )
     attached_connections: list[psutil._common.pconn] = field(
@@ -111,7 +111,7 @@ class Forward:
         cls,
         forward_type: Literal[FORWARD_TYPES],
         argument: str,
-        ssh_connection_destination: Union[IPv4Address, IPv6Address, str],
+        ssh_connection_destination: IPv4Address | IPv6Address | str,
     ):
         """Creates an ssh forward
 
@@ -202,7 +202,6 @@ def build_forward_list(
     """
     out_list = []
     for argument, value in arguments.value_arguments:
-
         # Create forward object
         if argument not in ("L", "R", "D"):
             continue

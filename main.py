@@ -14,12 +14,11 @@ from rich.live import Live
 from rich.text import Text
 from rich.tree import Tree
 
-
 # Project libraries
-from src.default import VERSION
-from src.forward import Forward
-from src.render import render_connection, render_ssh_process, return_with_color
-from src.ssh_process import SshProcess
+from where_my_tunnels.default import VERSION
+from where_my_tunnels.forward import Forward
+from where_my_tunnels.render import render_connection, render_ssh_process, return_with_color
+from where_my_tunnels.ssh_process import SshProcess
 
 console = Console()
 
@@ -94,7 +93,7 @@ def build_process_branch(ssh_process: SshProcess, parent_tree: Tree) -> Tree:
     """
     branch_title = render_ssh_process(ssh_process)
     if SHOW_ARGUMENTS:
-        branch_title += return_with_color(text=f" {" ".join(ssh_process.arguments.raw_arguments)}", color="white")
+        branch_title += return_with_color(text=f" {' '.join(ssh_process.arguments.raw_arguments)}", color="white")
     if parent_tree is not None:
         branch = parent_tree.add(branch_title)
     else:
@@ -166,7 +165,7 @@ def assign_socket_children(ssh_process_list: list[SshProcess]):
 
         # Add an error if no parent was found
         if ssh_process_list[socket_ssh_process_index] is not None:
-            socket_ssh_process.malformed_message = f'Orphan {socket_ssh_process.ssh_type.replace("_", " ")}'
+            socket_ssh_process.malformed_message = f"Orphan {socket_ssh_process.ssh_type.replace('_', ' ')}"
 
 
 def assign_forward_children(ssh_process_list: list[SshProcess], forward_list: list[Forward], max_depth: int = 3):
@@ -281,8 +280,8 @@ if __name__ == "__main__":
             + return_with_color(text=f"v{VERSION}\n", color=TITLE_COLOR)
             + "A tool for viewing SSH tunnels and connections.\n"
             "Created by Androsh7\n"
-            f"GitHub:  {return_with_color(text="https://github.com/androsh7/WhereMyTunnels", color=LINK_COLOR)}\n"
-            f"Website: {return_with_color(text="https://androsh7.com", color=LINK_COLOR)}"
+            f"GitHub:  {return_with_color(text='https://github.com/androsh7/WhereMyTunnels', color=LINK_COLOR)}\n"
+            f"Website: {return_with_color(text='https://androsh7.com', color=LINK_COLOR)}"
         )
         sys.exit(0)
 
@@ -294,7 +293,7 @@ if __name__ == "__main__":
 
     try:
         console.rule(
-            f"{return_with_color(text="WhereMyTunnels", color=TITLE_COLOR, bold=True)} {return_with_color(text=f"v{VERSION}", color=TITLE_COLOR)}",
+            f"{return_with_color(text='WhereMyTunnels', color=TITLE_COLOR, bold=True)} {return_with_color(text=f'v{VERSION}', color=TITLE_COLOR)}",
             style=TITLE_COLOR,
             characters="=",
         )

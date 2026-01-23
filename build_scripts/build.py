@@ -7,7 +7,7 @@ import subprocess
 import time
 
 PARENT_DIR = "/".join(__file__.replace("\\", "/").split("/")[:-2])
-with open(file=f"{PARENT_DIR}/VERSION.txt", mode="r", encoding="utf-8") as version_file:
+with open(file=f"{PARENT_DIR}/VERSION.txt", encoding="utf-8") as version_file:
     VERSION = version_file.read().strip()
 
 # ANSI color codes
@@ -98,7 +98,7 @@ def create_windows_image(python_version: str, python_executable_path: str) -> st
     os.makedirs(f"{PARENT_DIR}/dist/windows/", exist_ok=True)
     executable_name = f"wheremytunnels_v{VERSION}_windows_py{python_version}.exe"
 
-    print(CYAN + f"{"-" * 15} Building wheremytunnels for windows using {python_executable_path} {"-" * 15}" + RESET)
+    print(CYAN + f"{'-' * 15} Building wheremytunnels for windows using {python_executable_path} {'-' * 15}" + RESET)
 
     venv_dir = f"{PARENT_DIR}/build_scripts/windows_build_python{python_version}.venv"
     get_python_version_command = f"{python_executable_path} --version"
@@ -143,7 +143,7 @@ def create_linux_image(libc: str, libc_version: str, architecture: str, python_v
     executable_name = f"wheremytunnels_v{VERSION}_linux_{compile_info}.bin"
     repository_version = libc_version.replace(".", "_")
 
-    print(CYAN + f"{"-" * 15} Building wheremytunnels for linux {compile_info} {"-" * 15}" + RESET)
+    print(CYAN + f"{'-' * 15} Building wheremytunnels for linux {compile_info} {'-' * 15}" + RESET)
 
     create_compiler_image_command = (
         "docker build "
@@ -155,9 +155,9 @@ def create_linux_image(libc: str, libc_version: str, architecture: str, python_v
         f"--progress=plain "
         "."
     )
-    create_compiler_container_command = f"docker run --name {compile_name} " f"{compile_name}:{VERSION}"
+    create_compiler_container_command = f"docker run --name {compile_name} {compile_name}:{VERSION}"
     copy_executable_command = (
-        f"docker cp " f"{compile_name}:/src/wheremytunnels.bin " f"{PARENT_DIR}/dist/linux/{executable_name}"
+        f"docker cp {compile_name}:/src/wheremytunnels.bin {PARENT_DIR}/dist/linux/{executable_name}"
     )
     delete_image_command = f"docker rmi --force {compile_name}:{VERSION}"
     delete_container_command = f"docker rm --force {compile_name}"
@@ -194,17 +194,17 @@ def print_build_list(build_list: list[dict[str, str]]) -> None:
         build_list: The parsed build list
     """
     print(
-        f'┌{"─" * BUILD_COLUMN_SIZE}─{"─" * ARCHITECTURE_COLUMN_SIZE}─{"─" * OS_COLUMN_SIZE}─{"─" * LIBC_COLUMN_SIZE}─{"─" * PYTHON_COLUMN_SIZE}┐'
+        f"┌{'─' * BUILD_COLUMN_SIZE}─{'─' * ARCHITECTURE_COLUMN_SIZE}─{'─' * OS_COLUMN_SIZE}─{'─' * LIBC_COLUMN_SIZE}─{'─' * PYTHON_COLUMN_SIZE}┐"
     )
     print(f"│{'Available Builds':^{TOTAL_COLUMN_SIZE}}│")
     print(
-        f'├{"─" * BUILD_COLUMN_SIZE}┬{"─" * ARCHITECTURE_COLUMN_SIZE}┬{"─" * OS_COLUMN_SIZE}┬{"─" * LIBC_COLUMN_SIZE}┬{"─" * PYTHON_COLUMN_SIZE}┤'
+        f"├{'─' * BUILD_COLUMN_SIZE}┬{'─' * ARCHITECTURE_COLUMN_SIZE}┬{'─' * OS_COLUMN_SIZE}┬{'─' * LIBC_COLUMN_SIZE}┬{'─' * PYTHON_COLUMN_SIZE}┤"
     )
     print(
-        f'│{"Build":^{BUILD_COLUMN_SIZE}}│{"Architecture":^{ARCHITECTURE_COLUMN_SIZE}}│{"OS":^{OS_COLUMN_SIZE}}│{"libc":^{LIBC_COLUMN_SIZE}}│{"Python":^{PYTHON_COLUMN_SIZE}}│'
+        f"│{'Build':^{BUILD_COLUMN_SIZE}}│{'Architecture':^{ARCHITECTURE_COLUMN_SIZE}}│{'OS':^{OS_COLUMN_SIZE}}│{'libc':^{LIBC_COLUMN_SIZE}}│{'Python':^{PYTHON_COLUMN_SIZE}}│"
     )
     print(
-        f'├{"─" * BUILD_COLUMN_SIZE}┼{"─" * ARCHITECTURE_COLUMN_SIZE}┼{"─" * OS_COLUMN_SIZE}┼{"─" * LIBC_COLUMN_SIZE}┼{"─" * PYTHON_COLUMN_SIZE}┤'
+        f"├{'─' * BUILD_COLUMN_SIZE}┼{'─' * ARCHITECTURE_COLUMN_SIZE}┼{'─' * OS_COLUMN_SIZE}┼{'─' * LIBC_COLUMN_SIZE}┼{'─' * PYTHON_COLUMN_SIZE}┤"
     )
     for build_config in build_list:
         if build_config["operating_system"] == "linux":
@@ -212,16 +212,14 @@ def print_build_list(build_list: list[dict[str, str]]) -> None:
         else:
             libc_string = "N/A"
         print(
-            (
-                f"│{build_list.index(build_config) + 1:^{BUILD_COLUMN_SIZE}}│"
-                f'{build_config["architecture"]:^{ARCHITECTURE_COLUMN_SIZE}}│'
-                f'{build_config["operating_system"]:^{OS_COLUMN_SIZE}}│'
-                f"{libc_string:^{LIBC_COLUMN_SIZE}}│"
-                f'{build_config["python_version"]:^{PYTHON_COLUMN_SIZE}}│'
-            )
+            f"│{build_list.index(build_config) + 1:^{BUILD_COLUMN_SIZE}}│"
+            f"{build_config['architecture']:^{ARCHITECTURE_COLUMN_SIZE}}│"
+            f"{build_config['operating_system']:^{OS_COLUMN_SIZE}}│"
+            f"{libc_string:^{LIBC_COLUMN_SIZE}}│"
+            f"{build_config['python_version']:^{PYTHON_COLUMN_SIZE}}│"
         )
     print(
-        f'└{"─" * BUILD_COLUMN_SIZE}┴{"─" * ARCHITECTURE_COLUMN_SIZE}┴{"─" * OS_COLUMN_SIZE}┴{"─" * LIBC_COLUMN_SIZE}┴{"─" * PYTHON_COLUMN_SIZE}┘'
+        f"└{'─' * BUILD_COLUMN_SIZE}┴{'─' * ARCHITECTURE_COLUMN_SIZE}┴{'─' * OS_COLUMN_SIZE}┴{'─' * LIBC_COLUMN_SIZE}┴{'─' * PYTHON_COLUMN_SIZE}┘"
     )
     print(YELLOW + "Use the --build/-b option with the build number to build a specific image." + RESET)
     print(YELLOW + "NOTE: glibc version <2.28 are not supported due to package manager limitations" + RESET)
@@ -258,7 +256,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    with open(file=f"{PARENT_DIR}/build_scripts/build_list.json", mode="r", encoding="utf-8") as build_list_file:
+    with open(file=f"{PARENT_DIR}/build_scripts/build_list.json", encoding="utf-8") as build_list_file:
         build_list = json.load(build_list_file)
 
     # Validate build list
@@ -283,7 +281,7 @@ if __name__ == "__main__":
             if "architecture" not in build:
                 raise KeyError(f'Error: "architecture" key missing in build configuration: {build}')
             if build["architecture"] != "x86_64":
-                raise ValueError(f'Error: Unsupported architecture for windows build: {build["architecture"]}')
+                raise ValueError(f"Error: Unsupported architecture for windows build: {build['architecture']}")
             windows_build_info = build
 
     if args.list:

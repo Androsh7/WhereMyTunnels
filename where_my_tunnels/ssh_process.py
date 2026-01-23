@@ -1,20 +1,19 @@
 """Defines the SshProcess class"""
 
 # Standard libraries
-from typing import Literal, Optional
+from typing import Literal
 
 # Third-party libraries
 import psutil
 from attrs import define, field, validators
 
-
 # Project libraries
-from src.default import SSH_TYPES
-from src.forward import Forward, build_forward_list
-from src.ssh_arguments import SshArguments
+from where_my_tunnels.default import SSH_TYPES
+from where_my_tunnels.forward import Forward, build_forward_list
+from where_my_tunnels.ssh_arguments import SshArguments
 
 
-def get_socket_file(arguments: SshArguments) -> Optional[str]:
+def get_socket_file(arguments: SshArguments) -> str | None:
     """Parses ssh arguments for a socket file
 
     Args:
@@ -46,7 +45,7 @@ class SshProcess:
             iterable_validator=validators.instance_of(list),
         )
     )
-    socket_file: Optional[str] = field(validator=validators.optional(validator=validators.instance_of(str)))
+    socket_file: str | None = field(validator=validators.optional(validator=validators.instance_of(str)))
     forwards: list[Forward] = field(
         factory=list,
         validator=validators.optional(
@@ -56,8 +55,8 @@ class SshProcess:
         ),
     )
     children: list = field(factory=list, validator=validators.instance_of(list))
-    malformed_message: Optional[str] = field(default=None, validator=validators.optional(validators.instance_of(str)))
-    malformed_message_color: Optional[str] = field(
+    malformed_message: str | None = field(default=None, validator=validators.optional(validators.instance_of(str)))
+    malformed_message_color: str | None = field(
         default="bold red", validator=validators.optional(validators.instance_of(str))
     )
 
