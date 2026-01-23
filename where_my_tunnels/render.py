@@ -79,7 +79,7 @@ def render_ssh_process(process: SshProcess) -> str:
     )
 
 
-def render_connection(connection: psutil._common.pconn) -> str:
+def render_connection(connection: object) -> str:
     """Turns a connection into a printable string
 
     Args:

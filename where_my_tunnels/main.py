@@ -49,7 +49,7 @@ def get_ssh_processes() -> list[SshProcess]:
     return out_list
 
 
-def build_connection_branches(parent_branch: Tree, connection_list: list[psutil._common.pconn]):
+def build_connection_branches(parent_branch: Tree, connection_list: list[object]):
     """Creates branches for connections
 
     Args:

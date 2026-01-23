@@ -11,6 +11,7 @@ from attrs import define, field, validators
 from where_my_tunnels.default import SSH_TYPES
 from where_my_tunnels.forward import Forward, build_forward_list
 from where_my_tunnels.ssh_arguments import SshArguments
+from where_my_tunnels.utils import conn_validator
 
 
 def get_socket_file(arguments: SshArguments) -> str | None:
@@ -39,9 +40,9 @@ class SshProcess:
     username: str = field(validator=validators.instance_of(str))
     arguments: SshArguments = field(validator=validators.instance_of(SshArguments))
     pid: int = field(validator=validators.and_(validators.instance_of(int), validators.ge(1)))
-    connections: list[psutil._common.pconn] = field(
+    connections: list[object] = field(
         validator=validators.deep_iterable(
-            member_validator=validators.instance_of(psutil._common.pconn),
+            member_validator=conn_validator,
             iterable_validator=validators.instance_of(list),
         )
     )

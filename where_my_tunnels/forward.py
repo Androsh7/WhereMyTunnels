@@ -11,6 +11,7 @@ from attrs import define, field, validators
 # Project libraries
 from where_my_tunnels.default import FORWARD_ARGUMENT_TO_STRING, FORWARD_TYPES
 from where_my_tunnels.ssh_arguments import SshArguments
+from where_my_tunnels.utils import conn_validator
 
 
 @define
@@ -48,10 +49,10 @@ class Forward:
     malformed_message_color: str | None = field(
         default="bold red", validator=validators.optional(validators.instance_of(str))
     )
-    attached_connections: list[psutil._common.pconn] = field(
+    attached_connections: list[object] = field(
         factory=list,
         validator=validators.deep_iterable(
-            member_validator=validators.instance_of(psutil._common.pconn),
+            member_validator=conn_validator,
             iterable_validator=validators.instance_of(list),
         ),
     )
@@ -184,7 +185,7 @@ class Forward:
 
 
 def build_forward_list(
-    arguments: SshArguments, connections: list[psutil._common.pconn], has_socket_file: bool = False
+    arguments: SshArguments, connections: list[object], has_socket_file: bool = False
 ) -> list[Forward]:
     """Creates a list of forward objects
 
