@@ -2,9 +2,8 @@
 
 # Standard libraries
 import argparse
-import subprocess
-from typing import Literal
 from pathlib import Path
+from typing import Literal
 
 # Third-party libraries
 from python_on_whales import docker
@@ -23,6 +22,7 @@ LIBC_TO_DOCKERFILE = {
     "glibc-2.17": PARENT_DIRECTORY / "build_scripts" / "glibc-2_17-compiler-Dockerfile",
     "glibc-2.28": PARENT_DIRECTORY / "build_scripts" / "glibc-2_28-compiler-Dockerfile",
 }
+
 
 def build_linux_executable(
     python_version: str,
@@ -55,11 +55,11 @@ def build_linux_executable(
             "ARCHITECTURE": architecture,
         },
         context_path=PARENT_DIRECTORY,
-        tags=[f'{container_name}:latest'],
+        tags=[f"{container_name}:latest"],
     )
 
     # Run the Docker container
-    print(docker.run(image=f'{container_name}:latest', remove=False, name=container_name))
+    print(docker.run(image=f"{container_name}:latest", remove=False, name=container_name))
 
     # Download the executable from the container
     docker.copy(
@@ -69,9 +69,10 @@ def build_linux_executable(
 
     # Clean up the Docker container
     docker.remove(container_name)
-    
+
     # Return the path to the built executable
     return output_path
+
 
 def build_windows_executable(output_path: Path) -> Path:
     pass
@@ -82,7 +83,7 @@ def main():
         prog="build.py", description="Build script for compiling wheremytunnels with Nuitka"
     )
     subparsers = parser.add_subparsers(dest="platform", required=True)
-    
+
     # Windows argument parser
     windows = subparsers.add_parser("windows", help="Build wheremytunnels for Windows")
     windows.add_argument(
@@ -135,9 +136,11 @@ def main():
     elif args.platform == "windows":
         built_executable_path = build_windows_executable(
             output_path=args.output_path,
-            )
+        )
     else:
         raise ValueError(f"Unsupported platform: {args.platform}")
     print(f"Built executable at: {built_executable_path}")
+
+
 if __name__ == "__main__":
     main()
