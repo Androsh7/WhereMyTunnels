@@ -113,8 +113,9 @@ def build_linux_executable(
 
 def build_windows_executable(output_path: Path) -> Path:
     print("Installing python modules")
-    subprocess.run(["pip", "install", ".[dev]"], check=True, cwd=PARENT_DIRECTORY)
+    subprocess.run(["pip", "install", ".[dev]"], shell=True, check=True, cwd=PARENT_DIRECTORY)
     print("Compiling with Nuitka")
+    print(PARENT_DIRECTORY)
     subprocess.run(
         [
             "python",
@@ -125,6 +126,7 @@ def build_windows_executable(output_path: Path) -> Path:
             f"--output-file={output_path}",
             str(PARENT_DIRECTORY / "where_my_tunnels" / "main.py"),
         ],
+        shell=True,
         check=True,
         cwd=PARENT_DIRECTORY,
     )
