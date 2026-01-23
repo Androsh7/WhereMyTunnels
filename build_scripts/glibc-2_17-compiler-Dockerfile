@@ -13,11 +13,13 @@ RUN yum update \
     openssl-devel \
     pkgconfig \
     ca-certificates \
-    patchelf \
     zlib-devel \
     bzip2-devel \
     xz-devel \
     libffi-devel \
+    epel-release \
+&& yum -y install patchelf \
+&& yum -y clean all \
 && update-ca-trust
 
 # Build openssl from source

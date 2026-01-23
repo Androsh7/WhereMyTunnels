@@ -54,21 +54,18 @@ def build_linux_executable(
             "PYTHON_VERSION": python_version,
             "ARCHITECTURE": architecture,
         },
+        load=True,
         context_path=PARENT_DIRECTORY,
         tags=[f"{container_name}:latest"],
     )
 
-    # Run the Docker container
-    print(docker.run(image=f"{container_name}:latest", remove=False, name=container_name))
-
     # Download the executable from the container
-    docker.copy(
-        source=f"{container_name}:/src/wheremytunnels.bin",
-        destination=output_path,
-    )
+    container = docker.create(image=f"{container_name}:latest", name=container_name)
+    print(f"Created container with ID: {container.id}")
+    docker.copy(source=f"{container_name}:/src/wheremytunnels.bin", destination=output_path)
 
     # Clean up the Docker container
-    docker.remove(container_name)
+    docker.remove(container_name, force=True)
 
     # Return the path to the built executable
     return output_path
