@@ -60,7 +60,7 @@ jobs:
       - name: Build
         run: |
           mkdir -p dist
-          python build.py linux \
+          python build_scripts/build.py linux \
             --python-version "${{ matrix.python_version }}" \
             --libc "${{ matrix.libc }}" \
             --architecture "${{ matrix.architecture }}" \
