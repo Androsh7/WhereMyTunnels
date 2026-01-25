@@ -94,9 +94,7 @@ def build_linux_executable(
 
         # Test the built executable inside the container
         print(f"Testing the built executable inside container {container_name}")
-        for chunk in docker.container.execute(
-            container_name, ["/src/where_my_tunnels.bin", "--version"], stream=True
-        ):
+        for chunk in docker.container.execute(container_name, ["/src/where_my_tunnels.bin", "--version"], stream=True):
             print(chunk[1].decode(), end="")
 
         # Copy the built executable from the container to the host
