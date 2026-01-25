@@ -20,12 +20,12 @@ DEFAULT_ARCHITECTURE = "x86_64"
 ARCHITECTURE_OPTIONS = ["x86_64", "aarch64"]
 DOCKER_IMAGE_DICT = {
     "glibc-2.17": {
-        "x86_64": "androsh7/nuitka-compiler:latest-x86_64-glibc-2.17-python-3.13.11",
-        "aarch64": "androsh7/nuitka-compiler:latest-aarch64-glibc-2.17-python-3.13.11",
+        "x86_64": "androsh7/nuitka-compiler:latest-x86_64-glibc-2.17-py3.13",
+        "aarch64": "androsh7/nuitka-compiler:latest-aarch64-glibc-2.17-py3.13",
     },
     "glibc-2.28": {
-        "x86_64": "androsh7/nuitka-compiler:latest-x86_64-glibc-2.28-python-3.13.11",
-        "aarch64": "androsh7/nuitka-compiler:latest-aarch64-glibc-2.28-python-3.13.11",
+        "x86_64": "androsh7/nuitka-compiler:latest-x86_64-glibc-2.28-py3.13",
+        "aarch64": "androsh7/nuitka-compiler:latest-aarch64-glibc-2.28-py3.13",
     },
 }
 
