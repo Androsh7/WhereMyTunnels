@@ -92,6 +92,13 @@ def build_linux_executable(
         ):
             print(chunk[1].decode(), end="")
 
+        # Test the built executable inside the container
+        print(f"Testing the built executable inside container {container_name}")
+        for chunk in docker.container.execute(
+            container_name, ["/src/where_my_tunnels.bin", "--version"], stream=True
+        ):
+            print(chunk[1].decode(), end="")
+
         # Copy the built executable from the container to the host
         print(f"Copying built executable from container {container_name} to {output_path}")
         docker.copy(f"{container_name}:/src/where_my_tunnels.bin", output_path)
@@ -131,6 +138,7 @@ def build_windows_executable(output_path: Path) -> Path:
         check=True,
         cwd=PARENT_DIRECTORY,
     )
+    subprocess.run([str(output_path), "--version"], shell=True, check=True)
     return output_path
 
 

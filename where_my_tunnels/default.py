@@ -1,6 +1,6 @@
 """Defines default values and constants"""
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 FORWARD_ARGUMENT_TO_STRING = {
     "L": "local",
     "R": "reverse",
