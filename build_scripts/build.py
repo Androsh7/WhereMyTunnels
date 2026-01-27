@@ -15,23 +15,14 @@ PARENT_DIRECTORY = Path(__file__).parent.parent
 # Default build configurations
 DEFAULT_LIBC = "glibc-2.28"
 DEFAULT_ARCHITECTURE = "x86_64"
+DEFAULT_PYTHON_VERSION = "3.13"
 
 # Supported build options
 ARCHITECTURE_OPTIONS = ["x86_64", "aarch64"]
-DOCKER_IMAGE_DICT = {
-    "glibc-2.17": {
-        "x86_64": "androsh7/nuitka-compiler:latest-x86_64-glibc-2.17-py3.13",
-        "aarch64": "androsh7/nuitka-compiler:latest-aarch64-glibc-2.17-py3.13",
-    },
-    "glibc-2.28": {
-        "x86_64": "androsh7/nuitka-compiler:latest-x86_64-glibc-2.28-py3.13",
-        "aarch64": "androsh7/nuitka-compiler:latest-aarch64-glibc-2.28-py3.13",
-    },
-}
 
 
 def build_linux_executable(
-    libc: Literal[DOCKER_IMAGE_DICT.keys()],
+    libc: str,
     architecture: Literal[ARCHITECTURE_OPTIONS],
     output_path: Path,
 ) -> Path:
@@ -50,7 +41,7 @@ def build_linux_executable(
     container_name = f"wheremytunnels-builder-{libc}-{architecture}"
 
     # create the container
-    docker_url = DOCKER_IMAGE_DICT[libc][architecture]
+    docker_url = f'androsh7/nuitka-compiler:latest-{architecture}-{libc}-py{DEFAULT_PYTHON_VERSION}'
     print(f"Loading docker image: {docker_url}")
     docker.container.create(
         image=docker_url, name=container_name, workdir="/src", command=["bash", "-lc", "sleep infinity"]
@@ -161,7 +152,6 @@ def main():
         "--libc",
         required=True,
         type=str,
-        choices=DOCKER_IMAGE_DICT.keys(),
         default=DEFAULT_LIBC,
         help=f"The libc implementation to use, default: {DEFAULT_LIBC}",
     )
