@@ -10,8 +10,6 @@ build/
 
 # Nuitka
 build/
-*.build/
-*.dist/
-*.onefile-build
+main.*
 *.exe
 *.bin
