@@ -24,6 +24,7 @@ jobs:
       - name: Build
         run: |
           mkdir dist
+          python -m pip install python_on_whales
           python build_scripts/build.py windows --output-path dist/wheremytunnels-windows-x86_64.exe
 
       - name: Upload artifact
@@ -67,6 +68,7 @@ jobs:
       - name: Build
         run: |
           mkdir -p dist
+          python -m pip install python_on_whales
           python build_scripts/build.py linux \
             --libc "${{ matrix.libc }}" \
             --architecture "${{ matrix.architecture }}" \
