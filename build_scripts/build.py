@@ -41,7 +41,7 @@ def build_linux_executable(
     container_name = f"wheremytunnels-builder-{libc}-{architecture}"
 
     # create the container
-    docker_url = f'androsh7/nuitka-compiler:latest-{architecture}-{libc}-py{DEFAULT_PYTHON_VERSION}'
+    docker_url = f"androsh7/nuitka-compiler:latest-{architecture}-{libc}-py{DEFAULT_PYTHON_VERSION}"
     print(f"Loading docker image: {docker_url}")
     docker.container.create(
         image=docker_url, name=container_name, workdir="/src", command=["bash", "-lc", "sleep infinity"]
