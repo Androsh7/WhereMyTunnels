@@ -2,13 +2,12 @@
 
 # Standard libraries
 from ipaddress import IPv4Address, IPv6Address, ip_address
-from typing import Optional, Union
 
 # Third-party libraries
 from attrs import define, field, validators
 
 # Project libraries
-from src.default import SSH_FLAGS, SSH_VALUE_ARGUMENTS
+from where_my_tunnels.default import SSH_FLAGS, SSH_VALUE_ARGUMENTS
 
 
 @define
@@ -16,8 +15,8 @@ class SshArguments:
     """Class for organizing the ssh command arguments"""
 
     executable_name: str = field(validator=validators.instance_of(str))
-    username: Optional[str] = field(validator=validators.optional(validator=validators.instance_of(str)))
-    destination_host: Union[IPv4Address, IPv6Address, str] = field(
+    username: str | None = field(validator=validators.optional(validator=validators.instance_of(str)))
+    destination_host: IPv4Address | IPv6Address | str = field(
         validator=validators.or_(
             validators.instance_of(IPv4Address), validators.instance_of(IPv6Address), validators.instance_of(str)
         )
@@ -63,18 +62,14 @@ class SshArguments:
 
         argument_index = 1
         while argument_index < len(cmd_list):
-
             # Search for arguments
             if cmd_list[argument_index].startswith("-"):
-
                 # Search the arguments character-by-character
                 char_index = 1
                 while char_index < len(cmd_list[argument_index]):
-
                     # Search for arguments that require a value
                     char = cmd_list[argument_index][char_index]
                     if char in SSH_VALUE_ARGUMENTS:
-
                         # Grabs the argument type ("L", "R", "D", etc)
                         arg_type = char
 

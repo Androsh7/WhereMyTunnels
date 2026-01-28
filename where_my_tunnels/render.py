@@ -1,10 +1,9 @@
 """Defines the format for printing SshProcess objects"""
 
 # Third-party libraries
-import psutil
 
 # Project libraries
-from src.ssh_process import SshProcess
+from where_my_tunnels.ssh_process import SshProcess
 
 RENDER_DICT = {
     "master_socket": {
@@ -60,10 +59,10 @@ def render_ssh_process(process: SshProcess) -> str:
     Returns:
         The ssh process as a string
     """
-    out_string = f'{RENDER_DICT[process.ssh_type]["title"]}: '
+    out_string = f"{RENDER_DICT[process.ssh_type]['title']}: "
     if process.socket_file:
         out_string += f"{process.socket_file} "
-    out_string += f'{process.username.split("\\")[-1].lower()}@'
+    out_string += f"{process.username.split('\\')[-1].lower()}@"
     out_string += f"{process.arguments.destination_host}:{process.arguments.destination_port} "
     out_string += f"({process.pid}) "
     if process.malformed_message is not None:
@@ -79,7 +78,7 @@ def render_ssh_process(process: SshProcess) -> str:
     )
 
 
-def render_connection(connection: psutil._common.pconn) -> str:
+def render_connection(connection: object) -> str:
     """Turns a connection into a printable string
 
     Args:
