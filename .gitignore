@@ -11,6 +11,8 @@ dist/
 
 # Nuitka
 build/
-main.*
 *.exe
 *.bin
+*.build
+*.dist
+*.onefile-build
