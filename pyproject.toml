@@ -7,7 +7,7 @@ name = "WhereMyTunnels"
 version = "1.1.0"
 description = "Tool for viewing SSH connections"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
     "attrs",
@@ -17,14 +17,16 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "build",
     "nuitka",
     "python-on-whales",
     "pytest",
     "ruff",
+    "twine",
 ]
 
 [tool.ruff]
-target-version = "py313"
+target-version = "py310"
 line-length = 120
 select = [
     "E", # Pycodestyle errors
@@ -38,4 +40,7 @@ select = [
 max-line-length = 120
 
 [tool.setuptools]
-packages = ["where_my_tunnels"]
+packages = ["wheremytunnels"]
+
+[project.scripts]
+wheremytunnels = "wheremytunnels.main:main"

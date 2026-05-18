@@ -7,7 +7,7 @@ from ipaddress import IPv4Address, IPv6Address, ip_address
 from attrs import define, field, validators
 
 # Project libraries
-from where_my_tunnels.default import SSH_FLAGS, SSH_VALUE_ARGUMENTS
+from wheremytunnels.default import SSH_FLAGS, SSH_VALUE_ARGUMENTS
 
 
 @define
