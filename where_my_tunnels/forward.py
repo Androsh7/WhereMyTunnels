@@ -8,9 +8,9 @@ from typing import Literal
 from attrs import define, field, validators
 
 # Project libraries
-from wheremytunnels.default import FORWARD_ARGUMENT_TO_STRING, FORWARD_TYPES
-from wheremytunnels.ssh_arguments import SshArguments
-from wheremytunnels.utils import conn_validator
+from where_my_tunnels.default import FORWARD_ARGUMENT_TO_STRING, FORWARD_TYPES
+from where_my_tunnels.ssh_arguments import SshArguments
+from where_my_tunnels.utils import conn_validator
 
 
 @define

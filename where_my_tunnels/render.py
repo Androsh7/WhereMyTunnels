@@ -3,7 +3,7 @@
 # Third-party libraries
 
 # Project libraries
-from wheremytunnels.ssh_process import SshProcess
+from where_my_tunnels.ssh_process import SshProcess
 
 RENDER_DICT = {
     "master_socket": {
