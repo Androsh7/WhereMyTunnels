@@ -15,10 +15,10 @@ from rich.text import Text
 from rich.tree import Tree
 
 # Project libraries
-from where_my_tunnels.default import VERSION
-from where_my_tunnels.forward import Forward
-from where_my_tunnels.render import render_connection, render_ssh_process, return_with_color
-from where_my_tunnels.ssh_process import SshProcess
+from wheremytunnels.default import VERSION
+from wheremytunnels.forward import Forward
+from wheremytunnels.render import render_connection, render_ssh_process, return_with_color
+from wheremytunnels.ssh_process import SshProcess
 
 console = Console()
 
@@ -245,7 +245,7 @@ def render_tree(interval: float = 2.0):
             time.sleep(interval)
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(
         prog="WhereMyTunnels", description="Tool for viewing SSH connections", usage="wheremytunnels [options]"
     )
@@ -302,3 +302,7 @@ if __name__ == "__main__":
         pass
     except Exception as ex:
         raise Exception("WhereMyTunnels crashed (╯°□°)╯︵ ┻━┻") from ex
+
+
+if __name__ == "__main__":
+    main()
