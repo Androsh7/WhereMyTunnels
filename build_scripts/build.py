@@ -55,7 +55,7 @@ def build_linux_executable(
         docker.copy(PARENT_DIRECTORY / "README.md", f"{container_name}:/src/README.md")
         docker.copy(PARENT_DIRECTORY / "pyproject.toml", f"{container_name}:/src/pyproject.toml")
         docker.copy(PARENT_DIRECTORY / "setup.py", f"{container_name}:/src/setup.py")
-        docker.copy(PARENT_DIRECTORY / "wheremytunnels", f"{container_name}:/src/wheremytunnels")
+        docker.copy(PARENT_DIRECTORY / "where_my_tunnels", f"{container_name}:/src/where_my_tunnels")
 
         # Install python modules inside the container
         print(f"Installing python modules inside container {container_name}")
@@ -76,8 +76,8 @@ def build_linux_executable(
                 "--static-libpython=yes",
                 "--follow-imports",
                 "--lto=yes",
-                "--output-file=/src/wheremytunnels.bin",
-                "/src/wheremytunnels/main.py",
+                "--output-file=/src/where_my_tunnels.bin",
+                "/src/where_my_tunnels/main.py",
             ],
             stream=True,
         ):
@@ -85,12 +85,12 @@ def build_linux_executable(
 
         # Test the built executable inside the container
         print(f"Testing the built executable inside container {container_name}")
-        for chunk in docker.container.execute(container_name, ["/src/wheremytunnels.bin", "--version"], stream=True):
+        for chunk in docker.container.execute(container_name, ["/src/where_my_tunnels.bin", "--version"], stream=True):
             print(chunk[1].decode(), end="")
 
         # Copy the built executable from the container to the host
         print(f"Copying built executable from container {container_name} to {output_path}")
-        docker.copy(f"{container_name}:/src/wheremytunnels.bin", output_path)
+        docker.copy(f"{container_name}:/src/where_my_tunnels.bin", output_path)
 
     finally:
         # Cleanup containers
@@ -121,7 +121,7 @@ def build_windows_executable(output_path: Path) -> Path:
             "--follow-imports",
             "--assume-yes-for-downloads",
             f"--output-file={output_path}",
-            str(PARENT_DIRECTORY / "wheremytunnels" / "main.py"),
+            str(PARENT_DIRECTORY / "where_my_tunnels" / "main.py"),
         ],
         shell=True,
         check=True,
