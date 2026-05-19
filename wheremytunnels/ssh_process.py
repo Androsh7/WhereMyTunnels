@@ -8,10 +8,10 @@ import psutil
 from attrs import define, field, validators
 
 # Project libraries
-from where_my_tunnels.default import SSH_TYPES
-from where_my_tunnels.forward import Forward, build_forward_list
-from where_my_tunnels.ssh_arguments import SshArguments
-from where_my_tunnels.utils import conn_validator
+from wheremytunnels.default import SSH_TYPES
+from wheremytunnels.forward import Forward, build_forward_list
+from wheremytunnels.ssh_arguments import SshArguments
+from wheremytunnels.utils import conn_validator
 
 
 def get_socket_file(arguments: SshArguments) -> str | None:

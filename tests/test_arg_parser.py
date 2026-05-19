@@ -4,7 +4,7 @@
 import pytest
 
 # Project libraries
-from where_my_tunnels.ssh_arguments import SshArguments
+from wheremytunnels.ssh_arguments import SshArguments
 
 CASES = [
     # 1) No flags/args
